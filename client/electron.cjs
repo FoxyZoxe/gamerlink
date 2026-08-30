@@ -541,18 +541,63 @@ app.whenReady().then(
       );
 
     // ========================================================
-    // AUTO UPDATE
-    // ========================================================
+// AUTO UPDATE
+// ========================================================
 
-    if (!app.isPackaged) {
-      console.log(
-        "Mode développement : mise à jour automatique désactivée."
-      );
+if (!app.isPackaged) {
+  console.log(
+    "🔧 Mode développement : auto-update désactivé."
+  );
+} else {
+  console.log(
+    "🔄 Vérification des mises à jour..."
+  );
 
-      return;
-    }
+  autoUpdater.on("checking-for-update", () => {
+    console.log("🔎 Recherche d'une nouvelle version...");
+  });
 
-    autoUpdater.checkForUpdatesAndNotify();
+  autoUpdater.on("update-available", (info) => {
+    console.log(
+      `🆕 Mise à jour disponible : ${info.version}`
+    );
+  });
+
+  autoUpdater.on("update-not-available", (info) => {
+    console.log(
+      `✅ GamerLink est à jour (${info.version}).`
+    );
+  });
+
+  autoUpdater.on("error", (error) => {
+    console.error(
+      "❌ Erreur auto-update :",
+      error.message
+    );
+  });
+
+  autoUpdater.on("download-progress", (progress) => {
+    console.log(
+      `⬇️ Mise à jour : ${Math.round(
+        progress.percent
+      )}%`
+    );
+  });
+
+  autoUpdater.on("update-downloaded", (info) => {
+    console.log(
+      `✅ Mise à jour téléchargée : ${info.version}`
+    );
+
+    console.log(
+      "🔄 Redémarrage de GamerLink pour installer la mise à jour..."
+    );
+
+    autoUpdater.quitAndInstall();
+  });
+
+  autoUpdater.checkForUpdates();
+}
   }
 );
 
