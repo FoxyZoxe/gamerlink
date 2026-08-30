@@ -14,13 +14,14 @@
     "electron:build": "npm run build && electron-builder"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
-    "concurrently": "^10.0.5",
+    "concurrently": "^10.0.0",
     "electron": "^44.0.0",
     "electron-builder": "^26.15.3",
     "vite": "^5.4.0",
@@ -36,6 +37,13 @@
       "dist/**/*",
       "electron.cjs",
       "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "FoxyZoxe",
+        "repo": "gamerlink"
+      }
     ],
     "win": {
       "target": "nsis",

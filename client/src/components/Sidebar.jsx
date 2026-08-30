@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { api } from "../lib/api.js";
 import Avatar from "./Avatar.jsx";
 import { statusMeta } from "../lib/status.js";
 
@@ -23,82 +24,39 @@ export default function Sidebar() {
   const { user } = useAuth();
 
   const [collapsed, setCollapsed] = useState(false);
-
-  const [notificationCount, setNotificationCount] =
-    useState(0);
-
-  const [messageCount, setMessageCount] =
-    useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [messageCount, setMessageCount] = useState(0);
 
   const meta = statusMeta(user?.status);
 
-  /*
-   * Récupère les compteurs.
-   */
   async function updateBadges() {
     try {
-      const [notificationsRes, conversationsRes] =
+      const [notificationsData, conversationsData] =
         await Promise.all([
-          fetch("/api/notifications", {
-            headers: getAuthHeaders(),
-          }),
-
-          fetch("/api/messages/conversations", {
-            headers: getAuthHeaders(),
-          }),
+          api.getNotifications(),
+          api.getConversations(),
         ]);
 
-      if (notificationsRes.ok) {
-        const notificationsData =
-          await notificationsRes.json();
+      const unreadNotifications =
+        (notificationsData.notifications || []).filter(
+          (notification) => !notification.read
+        ).length;
 
-        const unreadNotifications =
-          (notificationsData.notifications || []).filter(
-            (notification) => !notification.read
-          ).length;
+      setNotificationCount(unreadNotifications);
 
-        setNotificationCount(
-          unreadNotifications
+      const unreadMessages =
+        (conversationsData.conversations || []).reduce(
+          (total, conversation) =>
+            total + (conversation.unread || 0),
+          0
         );
-      }
 
-      if (conversationsRes.ok) {
-        const conversationsData =
-          await conversationsRes.json();
-
-        const unreadMessages =
-          (conversationsData.conversations || []).reduce(
-            (total, conversation) =>
-              total + (conversation.unread || 0),
-            0
-          );
-
-        setMessageCount(unreadMessages);
-      }
+      setMessageCount(unreadMessages);
     } catch (err) {
-      console.error(
-        "Erreur badges sidebar :",
-        err
-      );
+      console.error("Erreur badges sidebar :", err);
     }
   }
 
-  function getAuthHeaders() {
-    const token =
-      sessionStorage.getItem(
-        "gamerlink_token"
-      );
-
-    return token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : {};
-  }
-
-  /*
-   * Actualisation automatique des badges.
-   */
   useEffect(() => {
     if (!user) return;
 
@@ -131,15 +89,13 @@ export default function Sidebar() {
         collapsed ? "collapsed" : ""
       }`}
     >
-
       {/* LOGO */}
       <div className="sidebar-logo">
-
         <img
-  src="/gamerlink-icon.png"
-  className="sidebar-logo-img"
-  alt="GamerLink"
-/>
+          src="/gamerlink-icon.png"
+          className="sidebar-logo-img"
+          alt="GamerLink"
+        />
 
         {!collapsed && (
           <span>GAMERLINK</span>
@@ -163,14 +119,11 @@ export default function Sidebar() {
         >
           {collapsed ? "»" : "«"}
         </button>
-
       </div>
 
       {/* NAVIGATION PRINCIPALE */}
       <nav className="nav-group">
-
         {NAV_ITEMS.map((item) => {
-
           const badge = getBadge(item);
 
           return (
@@ -184,7 +137,6 @@ export default function Sidebar() {
                 }`
               }
             >
-
               <span className="icon">
                 {item.icon}
               </span>
@@ -196,30 +148,19 @@ export default function Sidebar() {
               )}
 
               {badge > 0 && (
-                <span
-                  className={`nav-badge ${
-                    badge > 0
-                      ? "nav-badge-new"
-                      : ""
-                  }`}
-                >
-                  {badge > 99
-                    ? "99+"
-                    : badge}
+                <span className="nav-badge nav-badge-new">
+                  {badge > 99 ? "99+" : badge}
                 </span>
               )}
-
             </NavLink>
           );
         })}
-
       </nav>
 
       <div className="nav-divider" />
 
       {/* NAVIGATION BASSE */}
       <nav className="nav-group">
-
         {NAV_ITEMS_BOTTOM.map((item) => (
           <NavLink
             key={item.to}
@@ -230,7 +171,6 @@ export default function Sidebar() {
               }`
             }
           >
-
             <span className="icon">
               {item.icon}
             </span>
@@ -238,17 +178,13 @@ export default function Sidebar() {
             {!collapsed && (
               <span>{item.label}</span>
             )}
-
           </NavLink>
         ))}
-
       </nav>
 
       {/* PROFIL */}
       <div className="sidebar-footer">
-
         <div className="sidebar-me">
-
           <Avatar
             user={user}
             size={34}
@@ -265,11 +201,8 @@ export default function Sidebar() {
               </div>
             </div>
           )}
-
         </div>
-
       </div>
-
     </aside>
   );
 }
