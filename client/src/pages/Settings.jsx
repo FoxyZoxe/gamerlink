@@ -235,6 +235,19 @@ export default function Settings() {
   }
 
   // ==========================================================
+  // DÉCONNEXION
+  // ==========================================================
+
+  async function handleLogout() {
+    try {
+      await logout();
+      navigate("/connexion");
+    } catch (error) {
+      showToast(`⚠ ${error.message}`);
+    }
+  }
+
+  // ==========================================================
   // CHANGEMENT THÈME
   // ==========================================================
 
@@ -272,6 +285,7 @@ export default function Settings() {
 
   return (
     <div>
+
       {/* ======================================================
           HEADER
       ====================================================== */}
@@ -330,6 +344,7 @@ export default function Settings() {
           maxWidth: 700,
         }}
       >
+
         {/* ====================================================
             COMPTE
         ==================================================== */}
@@ -341,7 +356,9 @@ export default function Settings() {
                 COMPTE
               </div>
 
-              <h2>Ton compte GamerLink</h2>
+              <h2>
+                Ton compte GamerLink
+              </h2>
             </div>
 
             <div className="field">
@@ -405,9 +422,9 @@ export default function Settings() {
               </div>
             </div>
 
-            <div
-              className="settings-danger-zone"
-            >
+            {/* ZONE DANGEREUSE */}
+
+            <div className="settings-danger-zone">
               <div>
                 <div className="eyebrow">
                   ZONE DANGEREUSE
@@ -424,6 +441,45 @@ export default function Settings() {
                 onClick={deleteAccount}
               >
                 Supprimer mon compte
+              </button>
+            </div>
+
+            {/* DÉCONNEXION */}
+
+            <div
+              style={{
+                marginTop: 20,
+                paddingTop: 20,
+                borderTop:
+                  "1px solid var(--border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 16,
+              }}
+            >
+              <div>
+                <div className="eyebrow">
+                  SESSION
+                </div>
+
+                <p
+                  style={{
+                    margin: "6px 0 0",
+                    color: "var(--muted)",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  Déconnecte-toi de ton compte
+                  GamerLink sur cet appareil.
+                </p>
+              </div>
+
+              <button
+                className="btn btn-ghost"
+                onClick={handleLogout}
+              >
+                🚪 Déconnexion
               </button>
             </div>
           </>
@@ -784,22 +840,9 @@ export default function Settings() {
                 <span />
               </button>
             </div>
-
-            <p
-              style={{
-                color: "var(--muted)",
-                fontSize: "0.78rem",
-                lineHeight: 1.5,
-                marginTop: 18,
-              }}
-            >
-              La détection automatique arrive
-              progressivement dans GamerLink.
-              Ton statut "En jeu" peut déjà être
-              défini manuellement.
-            </p>
           </>
         )}
+
       </div>
     </div>
   );
