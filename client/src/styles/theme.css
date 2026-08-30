@@ -1,0 +1,210 @@
+/* ==========================================================================
+   GAMERLINK — Design tokens
+   Palette : le "lien" entre joueurs = un fil de dégradé violet → bleu
+   électrique, visible en filigrane dans toute l'interface (barre latérale,
+   anneaux de présence, séparateurs). C'est la signature visuelle de l'app.
+   ========================================================================== */
+
+:root {
+  /* Couleurs */
+  --void: #08080d;
+  --panel: #12121c;
+  --panel-2: #171728;
+  --panel-border: rgba(155, 131, 255, 0.14);
+  --panel-border-strong: rgba(155, 131, 255, 0.3);
+
+  --violet: #7b2ff7;
+  --blue: #2f6bff;
+  --glow: #b983ff;
+  --gradient-link: linear-gradient(135deg, var(--violet) 0%, var(--blue) 100%);
+
+  --text: #f2f1f7;
+  --text-dim: #b7b6c9;
+  --muted: #83839c;
+
+  --online: #35e58a;
+  --afk: #ffc85c;
+  --dnd: #ff5c7a;
+  --offline: #4a4a5c;
+
+  /* Typographie */
+  --font-display: "Chakra Petch", "Segoe UI", sans-serif;
+  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
+
+  /* Layout */
+  --sidebar-w: 248px;
+  --sidebar-w-collapsed: 76px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--void);
+  background-image: radial-gradient(circle at 15% 0%, rgba(123, 47, 247, 0.16), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(47, 107, 255, 0.12), transparent 45%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--violet);
+  color: white;
+}
+
+/* Scrollbars discrètes */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--panel-border-strong);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Focus clavier toujours visible (accessibilité) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--glow);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---- Primitives réutilisées dans les pages ---- */
+
+.glass-card {
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(18px);
+}
+
+.btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--gradient-link);
+  color: white;
+  box-shadow: 0 6px 20px -6px rgba(123, 47, 247, 0.6);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 8px 26px -4px rgba(123, 47, 247, 0.75);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--panel-border-strong);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  border-color: var(--glow);
+}
+
+.btn-danger {
+  background: rgba(255, 92, 122, 0.12);
+  color: var(--dnd);
+  border: 1px solid rgba(255, 92, 122, 0.35);
+}
+
+input,
+select,
+textarea {
+  background: var(--void);
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--glow);
+}
+
+label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}

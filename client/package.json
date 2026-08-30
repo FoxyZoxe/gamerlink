@@ -1,0 +1,51 @@
+{
+  "name": "gamerlink-client",
+  "version": "0.1.0",
+  "description": "GamerLink - plateforme gaming",
+  "author": "GamerLink",
+  "private": true,
+  "type": "module",
+  "main": "electron.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron": "electron electron.cjs",
+    "electron:build": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^10.0.5",
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3",
+    "vite": "^5.4.0",
+    "wait-on": "^9.1.0"
+  },
+  "build": {
+    "appId": "com.gamerlink.app",
+    "productName": "GamerLink",
+    "directories": {
+      "output": "C:/gamerlink-build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron.cjs",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

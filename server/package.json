@@ -1,0 +1,17 @@
+{
+  "name": "gamerlink-server",
+  "version": "0.1.0",
+  "description": "GamerLink backend API (auth, users, friends, messages, notifications)",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
