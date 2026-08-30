@@ -73,6 +73,12 @@ const pool = usePostgres
     })
   : null;
 
+  if (pool) {
+  pool.on("error", (err) => {
+    console.error("❌ PostgreSQL pool error:", err.message);
+  });
+}
+
 async function ensureJsonFile() {
   if (!existsSync(DATA_DIR)) {
     await mkdir(DATA_DIR, { recursive: true });
@@ -88,27 +94,43 @@ async function ensureJsonFile() {
 }
 
 async function ensurePostgres() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS gamerlink_state (
-      id INTEGER PRIMARY KEY,
-      data JSONB NOT NULL
-    )
-  `);
+  try {
+    console.log("🔄 Connexion à PostgreSQL...");
 
-  const result = await pool.query(
-    "SELECT data FROM gamerlink_state WHERE id = 1"
-  );
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS gamerlink_state (
+        id INTEGER PRIMARY KEY,
+        data JSONB NOT NULL
+      )
+    `);
 
-  if (result.rows.length === 0) {
-    const initialData = seed();
+    console.log("✅ Table gamerlink_state OK");
 
-    await pool.query(
-      `
-      INSERT INTO gamerlink_state (id, data)
-      VALUES (1, $1::jsonb)
-      `,
-      [JSON.stringify(initialData)]
+    const result = await pool.query(
+      "SELECT data FROM gamerlink_state WHERE id = 1"
     );
+
+    if (result.rows.length === 0) {
+      console.log("🆕 Initialisation de la base GamerLink...");
+
+      const initialData = seed();
+
+      await pool.query(
+        `
+          INSERT INTO gamerlink_state (id, data)
+          VALUES (1, $1::jsonb)
+        `,
+        [JSON.stringify(initialData)]
+      );
+
+      console.log("✅ Base GamerLink initialisée");
+    } else {
+      console.log("✅ Base GamerLink trouvée");
+    }
+  } catch (err) {
+    console.error("❌ ERREUR POSTGRESQL :", err.message);
+    console.error("Code PostgreSQL :", err.code || "inconnu");
+    throw err;
   }
 }
 
