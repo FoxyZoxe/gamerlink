@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { api } from "../lib/api.js";
 
-const TABS = ["Compte", "Apparence", "Notifications", "Confidentialité", "Jeu"];
+const TABS = [
+  "Compte",
+  "Apparence",
+  "Notifications",
+  "Confidentialité",
+  "Jeu",
+];
 
 const STATUS_OPTIONS = [
   { value: "online", label: "🟢 En ligne" },
@@ -13,189 +19,784 @@ const STATUS_OPTIONS = [
   { value: "invisible", label: "⚫ Invisible" },
 ];
 
+const THEMES = [
+  {
+    id: "dark",
+    name: "GamerLink",
+    description: "Le thème violet classique",
+    icon: "🟣",
+  },
+  {
+    id: "midnight",
+    name: "Midnight",
+    description: "Plus sombre et plus discret",
+    icon: "🌌",
+  },
+  {
+    id: "cyber",
+    name: "Cyber",
+    description: "Un style futuriste violet / cyan",
+    icon: "⚡",
+  },
+  {
+    id: "blue",
+    name: "Electric Blue",
+    description: "Une ambiance bleue électrique",
+    icon: "🔵",
+  },
+];
+
+const ACCENTS = [
+  {
+    id: "violet",
+    name: "Violet",
+    color: "#7b2ff7",
+  },
+  {
+    id: "blue",
+    name: "Bleu",
+    color: "#2f6bff",
+  },
+  {
+    id: "pink",
+    name: "Rose",
+    color: "#ff4fd8",
+  },
+  {
+    id: "cyan",
+    name: "Cyan",
+    color: "#00d9ff",
+  },
+  {
+    id: "green",
+    name: "Vert",
+    color: "#35e58a",
+  },
+];
+
+function getSavedTheme() {
+  return localStorage.getItem("gamerlink-theme") || "dark";
+}
+
+function getSavedAccent() {
+  return localStorage.getItem("gamerlink-accent") || "violet";
+}
+
+function getSavedAnimations() {
+  const saved = localStorage.getItem("gamerlink-animations");
+
+  if (saved === null) {
+    return true;
+  }
+
+  return saved === "true";
+}
+
 export default function Settings() {
   const { user, setUser, logout } = useAuth();
   const showToast = useToast();
   const navigate = useNavigate();
+
   const [tab, setTab] = useState("Compte");
 
-  const [customStatus, setCustomStatus] = useState(user?.custom_status || "");
-  const [privacy, setPrivacy] = useState(
-    user?.privacy || { whoCanAddMe: "everyone", whoCanMessageMe: "friends", profileVisibility: "public" }
+  const [customStatus, setCustomStatus] = useState(
+    user?.custom_status || ""
   );
-  const [notifPrefs, setNotifPrefs] = useState({ messages: true, friendRequests: true, invites: true, friendsOnline: false });
+
+  const [privacy, setPrivacy] = useState(
+    user?.privacy || {
+      whoCanAddMe: "everyone",
+      whoCanMessageMe: "friends",
+      profileVisibility: "public",
+    }
+  );
+
+  const [notifPrefs, setNotifPrefs] = useState({
+    messages: true,
+    friendRequests: true,
+    invites: true,
+    friendsOnline: false,
+  });
+
   const [autoDetect, setAutoDetect] = useState(true);
 
+  const [theme, setTheme] = useState(getSavedTheme());
+  const [accent, setAccent] = useState(getSavedAccent());
+  const [animations, setAnimations] = useState(
+    getSavedAnimations()
+  );
+
+  // ==========================================================
+  // THÈME
+  // ==========================================================
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("gamerlink-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.dataset.accent = accent;
+    localStorage.setItem("gamerlink-accent", accent);
+  }, [accent]);
+
+  useEffect(() => {
+    document.documentElement.dataset.animations = animations
+      ? "on"
+      : "off";
+
+    localStorage.setItem(
+      "gamerlink-animations",
+      String(animations)
+    );
+  }, [animations]);
+
+  // ==========================================================
+  // STATUT
+  // ==========================================================
+
   async function changeStatus(status) {
-    const { user: updated } = await api.setStatus(status);
-    setUser(updated);
-    showToast("✓ Statut mis à jour");
+    try {
+      const { user: updated } =
+        await api.setStatus(status);
+
+      setUser(updated);
+
+      showToast("✓ Statut mis à jour");
+    } catch (error) {
+      showToast(`⚠ ${error.message}`);
+    }
   }
+
+  // ==========================================================
+  // STATUT PERSONNALISÉ
+  // ==========================================================
 
   async function saveCustomStatus() {
-    const { user: updated } = await api.updateProfile({ custom_status: customStatus });
-    setUser(updated);
-    showToast("✓ Statut personnalisé enregistré");
+    try {
+      const { user: updated } =
+        await api.updateProfile({
+          custom_status: customStatus,
+        });
+
+      setUser(updated);
+
+      showToast(
+        "✓ Statut personnalisé enregistré"
+      );
+    } catch (error) {
+      showToast(`⚠ ${error.message}`);
+    }
   }
+
+  // ==========================================================
+  // CONFIDENTIALITÉ
+  // ==========================================================
 
   async function savePrivacy() {
-    const { user: updated } = await api.updateProfile({ privacy });
-    setUser(updated);
-    showToast("✓ Confidentialité mise à jour");
+    try {
+      const { user: updated } =
+        await api.updateProfile({
+          privacy,
+        });
+
+      setUser(updated);
+
+      showToast(
+        "✓ Confidentialité mise à jour"
+      );
+    } catch (error) {
+      showToast(`⚠ ${error.message}`);
+    }
   }
+
+  // ==========================================================
+  // SUPPRESSION COMPTE
+  // ==========================================================
 
   async function deleteAccount() {
-    if (!window.confirm("Supprimer définitivement ton compte GamerLink ? Cette action est irréversible.")) return;
-    await api.deleteAccount();
-    await logout();
-    navigate("/connexion");
+    if (
+      !window.confirm(
+        "Supprimer définitivement ton compte GamerLink ? Cette action est irréversible."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await api.deleteAccount();
+
+      await logout();
+
+      navigate("/connexion");
+    } catch (error) {
+      showToast(`⚠ ${error.message}`);
+    }
   }
 
-  if (!user) return null;
+  // ==========================================================
+  // CHANGEMENT THÈME
+  // ==========================================================
+
+  function changeTheme(themeId) {
+    setTheme(themeId);
+
+    const selectedTheme = THEMES.find(
+      (item) => item.id === themeId
+    );
+
+    showToast(
+      `✓ Thème ${selectedTheme?.name || ""} activé`
+    );
+  }
+
+  // ==========================================================
+  // CHANGEMENT ACCENT
+  // ==========================================================
+
+  function changeAccent(accentId) {
+    setAccent(accentId);
+
+    const selectedAccent = ACCENTS.find(
+      (item) => item.id === accentId
+    );
+
+    showToast(
+      `✓ Accent ${selectedAccent?.name || ""} activé`
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div>
+      {/* ======================================================
+          HEADER
+      ====================================================== */}
+
       <div className="page-header">
-        <h1>Paramètres</h1>
+        <div className="eyebrow">
+          GAMERLINK SETTINGS
+        </div>
+
+        <h1>⚙️ Paramètres</h1>
+
+        <p>
+          Personnalise ton expérience GamerLink.
+        </p>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+      {/* ======================================================
+          ONGLETS
+      ====================================================== */}
+
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          marginBottom: 24,
+          flexWrap: "wrap",
+        }}
+      >
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={tab === t ? "btn btn-primary" : "btn btn-ghost"}
-            style={{ padding: "8px 16px", fontSize: "0.84rem" }}
+            className={
+              tab === t
+                ? "btn btn-primary"
+                : "btn btn-ghost"
+            }
+            style={{
+              padding: "8px 16px",
+              fontSize: "0.84rem",
+            }}
           >
             {t}
           </button>
         ))}
       </div>
 
-      <div className="glass-card" style={{ padding: 26, maxWidth: 560 }}>
+      {/* ======================================================
+          CONTENU
+      ====================================================== */}
+
+      <div
+        className="glass-card settings-card"
+        style={{
+          padding: 26,
+          maxWidth: 700,
+        }}
+      >
+        {/* ====================================================
+            COMPTE
+        ==================================================== */}
+
         {tab === "Compte" && (
           <>
+            <div className="settings-section-title">
+              <div className="eyebrow">
+                COMPTE
+              </div>
+
+              <h2>Ton compte GamerLink</h2>
+            </div>
+
             <div className="field">
               <label>Email</label>
-              <input value={user.email} disabled />
+
+              <input
+                value={user.email}
+                disabled
+              />
             </div>
+
             <div className="field">
               <label>Statut</label>
-              <select value={user.status} onChange={(e) => changeStatus(e.target.value)}>
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
+
+              <select
+                value={user.status}
+                onChange={(e) =>
+                  changeStatus(e.target.value)
+                }
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option
+                    key={option.value}
+                    value={option.value}
+                  >
+                    {option.label}
                   </option>
                 ))}
               </select>
             </div>
+
             <div className="field">
-              <label>Statut personnalisé</label>
-              <div style={{ display: "flex", gap: 8 }}>
+              <label>
+                Statut personnalisé
+              </label>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                }}
+              >
                 <input
                   style={{ flex: 1 }}
                   placeholder="En train de jouer avec les potes"
                   value={customStatus}
-                  onChange={(e) => setCustomStatus(e.target.value)}
+                  maxLength={120}
+                  onChange={(e) =>
+                    setCustomStatus(
+                      e.target.value
+                    )
+                  }
                 />
-                <button className="btn btn-ghost" onClick={saveCustomStatus}>
+
+                <button
+                  className="btn btn-ghost"
+                  onClick={saveCustomStatus}
+                >
                   Enregistrer
                 </button>
               </div>
             </div>
-            <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--panel-border)" }}>
-              <button className="btn btn-danger" onClick={deleteAccount}>
+
+            <div
+              className="settings-danger-zone"
+            >
+              <div>
+                <div className="eyebrow">
+                  ZONE DANGEREUSE
+                </div>
+
+                <p>
+                  La suppression du compte est
+                  définitive.
+                </p>
+              </div>
+
+              <button
+                className="btn btn-danger"
+                onClick={deleteAccount}
+              >
                 Supprimer mon compte
               </button>
             </div>
           </>
         )}
 
+        {/* ====================================================
+            APPARENCE
+        ==================================================== */}
+
         {tab === "Apparence" && (
           <>
-            <div className="field">
-              <label>Thème</label>
-              <select defaultValue="sombre">
-                <option value="sombre">Sombre (par défaut)</option>
-                <option value="clair" disabled>
-                  Clair — bientôt disponible
-                </option>
-              </select>
-            </div>
-            <div className="field">
-              <label>Couleur d'accent</label>
-              <div style={{ display: "flex", gap: 10 }}>
-                {["#7B2FF7", "#2F6BFF", "#B983FF"].map((c) => (
-                  <div key={c} style={{ width: 30, height: 30, borderRadius: "50%", background: c, border: "2px solid var(--panel-border-strong)" }} />
-                ))}
+            <div className="settings-section-title">
+              <div className="eyebrow">
+                PERSONNALISATION
               </div>
+
+              <h2>
+                🎨 Apparence de GamerLink
+              </h2>
+
+              <p>
+                Choisis l'ambiance qui te correspond.
+              </p>
             </div>
-            <div className="field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <input type="checkbox" style={{ width: "auto" }} defaultChecked />
-              <label style={{ textTransform: "none" }}>Animations discrètes</label>
+
+            {/* THÈMES */}
+
+            <div className="settings-label">
+              THÈME
+            </div>
+
+            <div className="theme-grid">
+              {THEMES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`theme-card ${
+                    theme === item.id
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    changeTheme(item.id)
+                  }
+                >
+                  <div className="theme-card-icon">
+                    {item.icon}
+                  </div>
+
+                  <div className="theme-card-content">
+                    <strong>
+                      {item.name}
+                    </strong>
+
+                    <span>
+                      {item.description}
+                    </span>
+                  </div>
+
+                  {theme === item.id && (
+                    <div className="theme-check">
+                      ✓
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* ACCENTS */}
+
+            <div
+              className="settings-label"
+              style={{ marginTop: 26 }}
+            >
+              COULEUR D'ACCENT
+            </div>
+
+            <div className="accent-grid">
+              {ACCENTS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`accent-option ${
+                    accent === item.id
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    changeAccent(item.id)
+                  }
+                  title={item.name}
+                >
+                  <span
+                    className="accent-color"
+                    style={{
+                      background: item.color,
+                    }}
+                  />
+
+                  <span>
+                    {item.name}
+                  </span>
+
+                  {accent === item.id && (
+                    <span className="accent-check">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* ANIMATIONS */}
+
+            <div
+              className="settings-toggle"
+              style={{ marginTop: 26 }}
+            >
+              <div>
+                <strong>
+                  ✨ Animations discrètes
+                </strong>
+
+                <span>
+                  Active les petites animations
+                  de l'interface.
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className={`toggle ${
+                  animations
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setAnimations(
+                    (value) => !value
+                  )
+                }
+                aria-label="Activer ou désactiver les animations"
+              >
+                <span />
+              </button>
             </div>
           </>
         )}
 
+        {/* ====================================================
+            NOTIFICATIONS
+        ==================================================== */}
+
         {tab === "Notifications" && (
           <>
+            <div className="settings-section-title">
+              <div className="eyebrow">
+                NOTIFICATIONS
+              </div>
+
+              <h2>
+                🔔 Tes notifications
+              </h2>
+            </div>
+
             {[
-              ["messages", "Messages"],
-              ["friendRequests", "Demandes d'amis"],
-              ["invites", "Invitations"],
-              ["friendsOnline", "Amis en ligne"],
+              ["messages", "💬 Messages"],
+              [
+                "friendRequests",
+                "👥 Demandes d'amis",
+              ],
+              ["invites", "🎮 Invitations"],
+              [
+                "friendsOnline",
+                "🟢 Amis en ligne",
+              ],
             ].map(([key, label]) => (
-              <div key={key} className="field" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <input
-                  type="checkbox"
-                  style={{ width: "auto" }}
-                  checked={notifPrefs[key]}
-                  onChange={(e) => setNotifPrefs((p) => ({ ...p, [key]: e.target.checked }))}
-                />
-                <label style={{ textTransform: "none" }}>{label}</label>
+              <div
+                key={key}
+                className="settings-toggle"
+              >
+                <div>
+                  <strong>
+                    {label}
+                  </strong>
+                </div>
+
+                <button
+                  type="button"
+                  className={`toggle ${
+                    notifPrefs[key]
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setNotifPrefs((prefs) => ({
+                      ...prefs,
+                      [key]: !prefs[key],
+                    }))
+                  }
+                >
+                  <span />
+                </button>
               </div>
             ))}
           </>
         )}
 
+        {/* ====================================================
+            CONFIDENTIALITÉ
+        ==================================================== */}
+
         {tab === "Confidentialité" && (
           <>
+            <div className="settings-section-title">
+              <div className="eyebrow">
+                PRIVACY
+              </div>
+
+              <h2>
+                🔒 Confidentialité
+              </h2>
+            </div>
+
             <div className="field">
-              <label>Qui peut m'ajouter</label>
-              <select value={privacy.whoCanAddMe} onChange={(e) => setPrivacy((p) => ({ ...p, whoCanAddMe: e.target.value }))}>
-                <option value="everyone">Tout le monde</option>
-                <option value="friends_of_friends">Amis d'amis</option>
-                <option value="nobody">Personne</option>
+              <label>
+                Qui peut m'ajouter
+              </label>
+
+              <select
+                value={privacy.whoCanAddMe}
+                onChange={(e) =>
+                  setPrivacy((p) => ({
+                    ...p,
+                    whoCanAddMe:
+                      e.target.value,
+                  }))
+                }
+              >
+                <option value="everyone">
+                  Tout le monde
+                </option>
+
+                <option value="friends_of_friends">
+                  Amis d'amis
+                </option>
+
+                <option value="nobody">
+                  Personne
+                </option>
               </select>
             </div>
+
             <div className="field">
-              <label>Qui peut m'envoyer des messages</label>
-              <select value={privacy.whoCanMessageMe} onChange={(e) => setPrivacy((p) => ({ ...p, whoCanMessageMe: e.target.value }))}>
-                <option value="everyone">Tout le monde</option>
-                <option value="friends">Amis uniquement</option>
+              <label>
+                Qui peut m'envoyer des messages
+              </label>
+
+              <select
+                value={
+                  privacy.whoCanMessageMe
+                }
+                onChange={(e) =>
+                  setPrivacy((p) => ({
+                    ...p,
+                    whoCanMessageMe:
+                      e.target.value,
+                  }))
+                }
+              >
+                <option value="everyone">
+                  Tout le monde
+                </option>
+
+                <option value="friends">
+                  Amis uniquement
+                </option>
               </select>
             </div>
+
             <div className="field">
-              <label>Visibilité du profil</label>
-              <select value={privacy.profileVisibility} onChange={(e) => setPrivacy((p) => ({ ...p, profileVisibility: e.target.value }))}>
-                <option value="public">Public</option>
-                <option value="friends">Amis uniquement</option>
+              <label>
+                Visibilité du profil
+              </label>
+
+              <select
+                value={
+                  privacy.profileVisibility
+                }
+                onChange={(e) =>
+                  setPrivacy((p) => ({
+                    ...p,
+                    profileVisibility:
+                      e.target.value,
+                  }))
+                }
+              >
+                <option value="public">
+                  Public
+                </option>
+
+                <option value="friends">
+                  Amis uniquement
+                </option>
               </select>
             </div>
-            <button className="btn btn-primary" onClick={savePrivacy}>
-              Enregistrer
+
+            <button
+              className="btn btn-primary"
+              onClick={savePrivacy}
+            >
+              ✓ Enregistrer
             </button>
           </>
         )}
 
+        {/* ====================================================
+            JEU
+        ==================================================== */}
+
         {tab === "Jeu" && (
           <>
-            <div className="field" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <input type="checkbox" style={{ width: "auto" }} checked={autoDetect} onChange={(e) => setAutoDetect(e.target.checked)} />
-              <label style={{ textTransform: "none" }}>Détection automatique des jeux</label>
+            <div className="settings-section-title">
+              <div className="eyebrow">
+                GAMING
+              </div>
+
+              <h2>
+                🎮 Détection des jeux
+              </h2>
             </div>
-            <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: 10 }}>
-              La détection automatique arrive en V0.2. Le statut "En jeu" peut déjà être défini manuellement depuis l'onglet Compte.
+
+            <div className="settings-toggle">
+              <div>
+                <strong>
+                  Détection automatique
+                </strong>
+
+                <span>
+                  Détecte automatiquement les
+                  jeux lancés sur ton PC.
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className={`toggle ${
+                  autoDetect
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setAutoDetect(
+                    (value) => !value
+                  )
+                }
+              >
+                <span />
+              </button>
+            </div>
+
+            <p
+              style={{
+                color: "var(--muted)",
+                fontSize: "0.78rem",
+                lineHeight: 1.5,
+                marginTop: 18,
+              }}
+            >
+              La détection automatique arrive
+              progressivement dans GamerLink.
+              Ton statut "En jeu" peut déjà être
+              défini manuellement.
             </p>
           </>
         )}

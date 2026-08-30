@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../lib/api.js";
 import Avatar from "./Avatar.jsx";
+import CurrentGame from "./CurrentGame.jsx";
 import { statusMeta } from "../lib/status.js";
 
 const NAV_ITEMS = [
@@ -21,7 +22,10 @@ const NAV_ITEMS_BOTTOM = [
 ];
 
 export default function Sidebar() {
-  const { user } = useAuth();
+  const {
+    user,
+    currentGame,
+  } = useAuth();
 
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -29,31 +33,45 @@ export default function Sidebar() {
 
   const meta = statusMeta(user?.status);
 
+  // ==========================================================
+  // BADGES
+  // ==========================================================
+
   async function updateBadges() {
     try {
-      const [notificationsData, conversationsData] =
-        await Promise.all([
-          api.getNotifications(),
-          api.getConversations(),
-        ]);
+      const [
+        notificationsData,
+        conversationsData,
+      ] = await Promise.all([
+        api.getNotifications(),
+        api.getConversations(),
+      ]);
 
       const unreadNotifications =
         (notificationsData.notifications || []).filter(
           (notification) => !notification.read
         ).length;
 
-      setNotificationCount(unreadNotifications);
+      setNotificationCount(
+        unreadNotifications
+      );
 
       const unreadMessages =
         (conversationsData.conversations || []).reduce(
           (total, conversation) =>
-            total + (conversation.unread || 0),
+            total +
+            (conversation.unread || 0),
           0
         );
 
-      setMessageCount(unreadMessages);
+      setMessageCount(
+        unreadMessages
+      );
     } catch (err) {
-      console.error("Erreur badges sidebar :", err);
+      console.error(
+        "Erreur badges sidebar :",
+        err
+      );
     }
   }
 
@@ -71,6 +89,10 @@ export default function Sidebar() {
     };
   }, [user]);
 
+  // ==========================================================
+  // BADGES NAVIGATION
+  // ==========================================================
+
   function getBadge(item) {
     if (item.to === "/notifications") {
       return notificationCount;
@@ -83,16 +105,35 @@ export default function Sidebar() {
     return 0;
   }
 
+  // ==========================================================
+  // STATUT À AFFICHER
+  // ==========================================================
+
+  const displayStatus = currentGame
+    ? `🎮 Joue à ${currentGame.name}`
+    : meta.label;
+
+    console.log(
+  "🎮 SIDEBAR currentGame :",
+  currentGame
+);
+  // ==========================================================
+  // RENDU
+  // ==========================================================
+
   return (
     <aside
       className={`sidebar ${
         collapsed ? "collapsed" : ""
       }`}
     >
-      {/* LOGO */}
+      {/* =====================================================
+          LOGO
+          ===================================================== */}
+
       <div className="sidebar-logo">
         <img
-          src="/gamerlink-icon.png"
+          src="./gamerlink-icon.png"
           className="sidebar-logo-img"
           alt="GamerLink"
         />
@@ -104,7 +145,9 @@ export default function Sidebar() {
         <button
           className="sidebar-collapse-btn"
           onClick={() =>
-            setCollapsed((current) => !current)
+            setCollapsed(
+              (current) => !current
+            )
           }
           aria-label={
             collapsed
@@ -121,10 +164,14 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* NAVIGATION PRINCIPALE */}
+      {/* =====================================================
+          NAVIGATION PRINCIPALE
+          ===================================================== */}
+
       <nav className="nav-group">
         {NAV_ITEMS.map((item) => {
-          const badge = getBadge(item);
+          const badge =
+            getBadge(item);
 
           return (
             <NavLink
@@ -133,7 +180,9 @@ export default function Sidebar() {
               end={item.end}
               className={({ isActive }) =>
                 `nav-item ${
-                  isActive ? "active" : ""
+                  isActive
+                    ? "active"
+                    : ""
                 }`
               }
             >
@@ -149,7 +198,9 @@ export default function Sidebar() {
 
               {badge > 0 && (
                 <span className="nav-badge nav-badge-new">
-                  {badge > 99 ? "99+" : badge}
+                  {badge > 99
+                    ? "99+"
+                    : badge}
                 </span>
               )}
             </NavLink>
@@ -159,50 +210,76 @@ export default function Sidebar() {
 
       <div className="nav-divider" />
 
-      {/* NAVIGATION BASSE */}
-      <nav className="nav-group">
-        {NAV_ITEMS_BOTTOM.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `nav-item ${
-                isActive ? "active" : ""
-              }`
-            }
-          >
-            <span className="icon">
-              {item.icon}
-            </span>
+      {/* =====================================================
+          NAVIGATION BASSE
+          ===================================================== */}
 
-            {!collapsed && (
-              <span>{item.label}</span>
-            )}
-          </NavLink>
-        ))}
+      <nav className="nav-group">
+        {NAV_ITEMS_BOTTOM.map(
+          (item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `nav-item ${
+                  isActive
+                    ? "active"
+                    : ""
+                }`
+              }
+            >
+              <span className="icon">
+                {item.icon}
+              </span>
+
+              {!collapsed && (
+                <span>
+                  {item.label}
+                </span>
+              )}
+            </NavLink>
+          )
+        )}
       </nav>
 
-      {/* PROFIL */}
+      {/* =====================================================
+          PROFIL
+          ===================================================== */}
+
       <div className="sidebar-footer">
-        <div className="sidebar-me">
-          <Avatar
-            user={user}
-            size={34}
-          />
 
-          {!collapsed && user && (
-            <div>
-              <div className="name">
-                {user.username}
-              </div>
+  {!collapsed && currentGame && (
+    <CurrentGame compact />
+  )}
 
-              <div className="status-label">
-                {meta.label}
-              </div>
-            </div>
-          )}
+  <div className="sidebar-me">
+    <Avatar
+      user={user}
+      size={34}
+    />
+
+    {!collapsed && user && (
+      <div>
+        <div className="name">
+          {user.username}
+        </div>
+
+        <div
+          className={`status-label ${
+            currentGame
+              ? "playing"
+              : ""
+          }`}
+        >
+          {currentGame
+            ? `🎮 Joue à ${currentGame.name}`
+            : meta.label}
         </div>
       </div>
+    )}
+  </div>
+
+</div>
     </aside>
   );
 }

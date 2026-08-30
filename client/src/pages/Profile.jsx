@@ -4,6 +4,8 @@ import { useToast } from "../context/ToastContext.jsx";
 import { api } from "../lib/api.js";
 import Avatar from "../components/Avatar.jsx";
 import { statusMeta } from "../lib/status.js";
+import CurrentGame from "../components/CurrentGame.jsx";
+import { useRef } from "react";
 
 export default function Profile() {
   const { user, setUser } = useAuth();
@@ -24,6 +26,55 @@ export default function Profile() {
 
   const [saving, setSaving] = useState(false);
 
+  const fileInputRef = useRef(null);
+const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+async function changeAvatar(event) {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    showToast("⚠ Choisis une image");
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    showToast("⚠ Image trop lourde (5 Mo maximum)");
+    return;
+  }
+
+  try {
+    setUploadingAvatar(true);
+
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+      try {
+        const avatar = reader.result;
+
+        const result = await api.updateProfile({
+          avatar,
+        });
+
+        if (result?.user) {
+          setUser(result.user);
+        }
+
+        showToast("✓ Photo de profil mise à jour");
+      } catch (error) {
+        showToast(`⚠ ${error.message}`);
+      } finally {
+        setUploadingAvatar(false);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  } catch (error) {
+    setUploadingAvatar(false);
+    showToast(`⚠ ${error.message}`);
+  }
+}
   useEffect(() => {
     if (!user) return;
 
@@ -113,16 +164,50 @@ export default function Profile() {
       </div>
 
       {/* PROFIL HERO */}
+
+      <CurrentGame />
       <section className="profile-hero glass-card">
 
         <div className="profile-hero-glow" />
 
-        <div className="profile-avatar">
-          <Avatar
-            user={user}
-            size={110}
-          />
-        </div>
+        <div
+  className="profile-avatar"
+  style={{
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "12px",
+  }}
+>
+  <Avatar
+    user={user}
+    size={110}
+  />
+
+  <input
+    ref={fileInputRef}
+    type="file"
+    accept="image/png,image/jpeg,image/webp,image/gif"
+    onChange={changeAvatar}
+    style={{ display: "none" }}
+  />
+
+  <button
+    type="button"
+    className="btn btn-ghost"
+    onClick={() => fileInputRef.current?.click()}
+    disabled={uploadingAvatar}
+    style={{
+      fontSize: "0.75rem",
+      padding: "7px 12px",
+    }}
+  >
+    {uploadingAvatar
+      ? "⏳ Chargement..."
+      : "📷 Changer la photo"}
+  </button>
+</div>
 
         <div className="profile-identity">
 

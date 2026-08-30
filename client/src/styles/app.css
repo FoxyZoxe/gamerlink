@@ -28,13 +28,17 @@
 }
 
 /* ==========================================================================
-   Sidebar — le "fil" GamerLink descend le long du bord gauche
+   Sidebar
    ========================================================================== */
 
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  background: linear-gradient(180deg, #0c0c15 0%, #0a0a10 100%);
+  background: linear-gradient(
+    180deg,
+    #0c0c15 0%,
+    #0a0a10 100%
+  );
   border-right: 1px solid var(--panel-border);
   display: flex;
   flex-direction: column;
@@ -121,7 +125,9 @@
   font-size: 0.9rem;
   position: relative;
   white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .nav-item .icon {
@@ -188,7 +194,7 @@
 }
 
 /* ==========================================================================
-   Avatar + anneau de présence (élément signature)
+   Avatar
    ========================================================================== */
 
 .avatar-ring {
@@ -203,7 +209,10 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: var(--ring-color, var(--offline));
+  background: var(
+    --ring-color,
+    var(--offline)
+  );
 }
 
 .avatar-ring.pulsing::before {
@@ -213,10 +222,23 @@
 @keyframes pulse-ring {
   0%,
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ring-color) 55%, transparent);
+    box-shadow:
+      0 0 0 0
+      color-mix(
+        in srgb,
+        var(--ring-color) 55%,
+        transparent
+      );
   }
+
   50% {
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--ring-color) 0%, transparent);
+    box-shadow:
+      0 0 0 5px
+      color-mix(
+        in srgb,
+        var(--ring-color) 0%,
+        transparent
+      );
   }
 }
 
@@ -268,7 +290,11 @@
 }
 
 .grid-2 {
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(260px, 1fr)
+    );
 }
 
 .friend-row {
@@ -281,7 +307,12 @@
 .friend-row .link-thread {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, var(--panel-border-strong), transparent);
+  background:
+    linear-gradient(
+      90deg,
+      var(--panel-border-strong),
+      transparent
+    );
 }
 
 .friend-row .meta {
@@ -327,7 +358,8 @@
   border: 1px solid var(--panel-border-strong);
   padding: 12px 20px;
   border-radius: var(--radius-sm);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.4);
   font-weight: 600;
   font-size: 0.88rem;
   z-index: 50;
@@ -337,11 +369,18 @@
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 8px);
+    transform: translate(
+      -50%,
+      8px
+    );
   }
+
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translate(
+      -50%,
+      0
+    );
   }
 }
 
@@ -356,7 +395,7 @@
 }
 
 /* ==========================================================================
-   Auth pages
+   Auth
    ========================================================================== */
 
 .auth-screen {
@@ -408,13 +447,14 @@
 }
 
 /* ==========================================================================
-   Responsive
+   Responsive général
    ========================================================================== */
 
 @media (max-width: 860px) {
   .shell {
     flex-direction: column;
   }
+
   .sidebar {
     width: 100%;
     flex-direction: row;
@@ -422,47 +462,130 @@
     overflow-x: auto;
     padding: 10px 14px;
   }
+
   .sidebar::before {
     display: none;
   }
+
   .sidebar-logo {
     padding: 0 14px 0 0;
   }
+
   .nav-group {
     flex-direction: row;
   }
+
   .nav-divider {
     display: none;
   }
+
   .sidebar-footer {
     margin-top: 0;
     margin-left: auto;
     flex-direction: row;
   }
+
   .main {
     padding: 22px 18px 48px;
   }
 }
 
-/* ==========================================================================\n   V0.2 — Squads\n   ========================================================================== */
-.squad-hero { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; }
-.squad-create { padding:22px; margin-bottom:30px; }
-.squad-card { padding:20px; min-height:210px; display:flex; flex-direction:column; }
-.squad-card-top { display:flex; justify-content:space-between; gap:14px; }
-.squad-card h3 { margin-top:5px; font-size:1.12rem; }
-.squad-card p { color:var(--muted); font-size:.84rem; line-height:1.5; min-height:40px; }
-.squad-count { font-family:var(--font-mono); font-size:.75rem; color:var(--glow); padding:6px 9px; border:1px solid var(--panel-border-strong); border-radius:999px; height:max-content; }
-.squad-members { display:flex; align-items:center; padding:8px 0 16px; }
-.squad-members .avatar-ring { margin-right:-7px; }
-.squad-actions { margin-top:auto; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-.squad-invite { display:flex; gap:6px; flex:1; min-width:210px; }
-.squad-invite select { flex:1; min-width:0; }
-.compact-select { width:auto; padding:7px 10px; }
-@media (max-width:700px) { .squad-hero { align-items:flex-start; flex-direction:column; } .main { padding:24px 18px 50px; } }
-.game-library-card { transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
-.game-library-card:hover { transform: translateY(-2px); border-color: var(--panel-border-strong); }
-.game-library-card.game-active { border-color: rgba(53,229,138,.35); box-shadow: 0 0 28px rgba(53,229,138,.08); }
+/* ==========================================================================
+   V0.2 — Squads
+   ========================================================================== */
 
+.squad-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.squad-create {
+  padding: 22px;
+  margin-bottom: 30px;
+}
+
+.squad-card {
+  padding: 20px;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+}
+
+.squad-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.squad-card h3 {
+  margin-top: 5px;
+  font-size: 1.12rem;
+}
+
+.squad-card p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  min-height: 40px;
+}
+
+.squad-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--glow);
+  padding: 6px 9px;
+  border: 1px solid var(--panel-border-strong);
+  border-radius: 999px;
+  height: max-content;
+}
+
+.squad-members {
+  display: flex;
+  align-items: center;
+  padding: 8px 0 16px;
+}
+
+.squad-members .avatar-ring {
+  margin-right: -7px;
+}
+
+.squad-actions {
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.squad-invite {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  min-width: 210px;
+}
+
+.squad-invite select {
+  flex: 1;
+  min-width: 0;
+}
+
+.compact-select {
+  width: auto;
+  padding: 7px 10px;
+}
+
+@media (max-width: 700px) {
+  .squad-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .main {
+    padding: 24px 18px 50px;
+  }
+}
 
 /* ==========================================================================
    V0.2 — Centre de communication
@@ -508,7 +631,9 @@
 .messages-tab.active {
   color: var(--text);
   background: rgba(123, 47, 247, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(155, 131, 255, 0.16);
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(155, 131, 255, 0.16);
 }
 
 .messages-tab-count {
@@ -525,16 +650,12 @@
   font-size: 0.68rem;
 }
 
-/* Fenêtre principale */
-
 .messages-shell {
   height: 70vh;
   min-height: 500px;
   display: flex;
   overflow: hidden;
 }
-
-/* Sidebar */
 
 .messages-sidebar {
   width: 285px;
@@ -563,8 +684,6 @@
   letter-spacing: 0.08em;
 }
 
-/* Conversation */
-
 .conversation-item,
 .squad-chat-item {
   width: 100%;
@@ -591,7 +710,8 @@
 .conversation-item.active,
 .squad-chat-item.active {
   background: rgba(123, 47, 247, 0.13);
-  box-shadow: inset 3px 0 0 var(--glow);
+  box-shadow:
+    inset 3px 0 0 var(--glow);
 }
 
 .conversation-content {
@@ -631,8 +751,6 @@
   font-weight: 800;
 }
 
-/* Squad */
-
 .squad-chat-icon {
   width: 38px;
   height: 38px;
@@ -641,11 +759,12 @@
   justify-content: center;
   flex-shrink: 0;
   border-radius: 11px;
-  background: linear-gradient(
-    135deg,
-    rgba(123, 47, 247, 0.2),
-    rgba(80, 50, 180, 0.08)
-  );
+  background:
+    linear-gradient(
+      135deg,
+      rgba(123, 47, 247, 0.2),
+      rgba(80, 50, 180, 0.08)
+    );
   border: 1px solid var(--panel-border-strong);
   font-size: 1.05rem;
 }
@@ -662,8 +781,6 @@
   font-size: 1.8rem;
   margin-bottom: 8px;
 }
-
-/* Zone chat */
 
 .messages-content {
   flex: 1;
@@ -705,7 +822,8 @@
   justify-content: center;
   border-radius: 12px;
   background: var(--gradient-link);
-  box-shadow: 0 0 20px rgba(123, 47, 247, 0.18);
+  box-shadow:
+    0 0 20px rgba(123, 47, 247, 0.18);
   font-size: 1.15rem;
 }
 
@@ -722,8 +840,6 @@
 .squad-header-members .avatar-ring:first-child {
   margin-left: 0;
 }
-
-/* Messages */
 
 .chat-messages {
   flex: 1;
@@ -778,7 +894,8 @@
   border: none;
   border-radius: 14px 14px 4px 14px;
   background: var(--gradient-link);
-  box-shadow: 0 5px 18px rgba(123, 47, 247, 0.12);
+  box-shadow:
+    0 5px 18px rgba(123, 47, 247, 0.12);
 }
 
 .message-time {
@@ -799,8 +916,6 @@
   font-size: 2rem;
   margin-bottom: 8px;
 }
-
-/* Message de bienvenue */
 
 .messages-welcome {
   margin: auto;
@@ -833,8 +948,6 @@
   font-size: 0.8rem;
   line-height: 1.5;
 }
-
-/* Saisie */
 
 .message-composer {
   position: relative;
@@ -870,8 +983,6 @@
   justify-content: center;
   flex-shrink: 0;
 }
-
-/* Responsive */
 
 @media (max-width: 700px) {
   .messages-shell {
@@ -929,8 +1040,6 @@
   gap: 20px;
 }
 
-/* Jeu actuellement lancé */
-
 .current-game-card {
   margin-bottom: 24px;
   padding: 22px;
@@ -987,7 +1096,7 @@
   font-size: 0.78rem;
 }
 
-/* Statistiques */
+/* Stats */
 
 .games-stats {
   display: grid;
@@ -1088,22 +1197,40 @@
   font-weight: 800;
 }
 
-/* Bibliothèque */
+/* ==========================================================================
+   Bibliothèque de jeux
+   ========================================================================== */
 
 .games-library-grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(280px, 1fr)
-  );
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(280px, 1fr)
+    );
   gap: 14px;
 }
 
 .game-library-card {
+  width: 100%;
+  box-sizing: border-box;
+
   padding: 18px;
+
   display: flex;
+  flex-direction: row;
+
   gap: 14px;
+
   min-height: 150px;
+
+  position: relative;
+  z-index: 1;
+
+  overflow: visible;
+
+  cursor: default;
+
   transition:
     transform 0.18s ease,
     border-color 0.18s ease,
@@ -1113,6 +1240,23 @@
 .game-library-card:hover {
   transform: translateY(-2px);
   border-color: var(--panel-border-strong);
+}
+
+.game-library-card.game-active {
+  border-color: rgba(53, 229, 138, 0.35);
+
+  box-shadow:
+    0 0 28px
+    rgba(53, 229, 138, 0.08);
+}
+
+.game-library-card:focus {
+  outline: none;
+}
+
+.game-library-card:focus-visible {
+  outline: 2px solid var(--glow);
+  outline-offset: 2px;
 }
 
 .game-card-icon {
@@ -1131,6 +1275,7 @@
 .game-card-content {
   flex: 1;
   min-width: 0;
+
   display: flex;
   flex-direction: column;
 }
@@ -1156,12 +1301,57 @@
   white-space: nowrap;
 }
 
-.game-card-actions {
-  margin-top: auto;
-  padding-top: 15px;
+.game-current-playtime {
+  margin-top: 6px;
+  color: var(--glow);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
-/* Catalogue */
+/* ==========================================================
+   IMPORTANT :
+   Les boutons des cartes restent cliquables.
+   NE PAS mettre pointer-events: none ici.
+   ========================================================== */
+
+.game-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: auto;
+  padding-top: 15px;
+
+  visibility: visible;
+  opacity: 1;
+
+  position: relative;
+  z-index: 20;
+}
+
+.game-card-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  visibility: visible;
+  opacity: 1;
+
+  position: relative;
+  z-index: 21;
+
+  cursor: pointer;
+}
+
+.game-card-actions .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   Catalogue
+   ========================================================================== */
 
 .games-catalog-toolbar {
   padding: 14px 16px;
@@ -1217,8 +1407,6 @@
   font-size: 0.66rem;
 }
 
-/* Responsive */
-
 @media (max-width: 850px) {
   .games-stats {
     grid-template-columns: 1fr;
@@ -1247,10 +1435,18 @@
   .catalog-game-row .eyebrow {
     display: none;
   }
+
+  .game-card-actions {
+    flex-wrap: wrap;
+  }
+
+  .game-card-actions .btn {
+    flex: 1;
+  }
 }
 
 /* ==========================================================================
-   V0.2 — Gamer Profile
+   Gamer Profile
    ========================================================================== */
 
 .profile-page {
@@ -1260,8 +1456,6 @@
 .profile-page-header {
   margin-bottom: 22px;
 }
-
-/* Hero */
 
 .profile-hero {
   position: relative;
@@ -1331,7 +1525,8 @@
   height: 7px;
   border-radius: 50%;
   background: var(--status-color);
-  box-shadow: 0 0 9px var(--status-color);
+  box-shadow:
+    0 0 9px var(--status-color);
 }
 
 .profile-current-game {
@@ -1362,8 +1557,6 @@
   z-index: 1;
   flex-shrink: 0;
 }
-
-/* Stats */
 
 .profile-stats {
   display: grid;
@@ -1408,11 +1601,10 @@
   font-size: 0.64rem;
 }
 
-/* Layout */
-
 .profile-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns:
+    minmax(0, 1fr) 280px;
   gap: 14px;
 }
 
@@ -1427,8 +1619,6 @@
   flex-direction: column;
   gap: 14px;
 }
-
-/* Sections */
 
 .profile-section {
   padding: 20px;
@@ -1466,8 +1656,6 @@
   font-size: 0.6rem;
 }
 
-/* Jeux */
-
 .profile-game-tags {
   display: flex;
   flex-wrap: wrap;
@@ -1498,8 +1686,6 @@
   color: var(--muted);
   font-size: 0.66rem;
 }
-
-/* Activité */
 
 .profile-activity {
   display: flex;
@@ -1536,8 +1722,6 @@
   line-height: 1.45;
 }
 
-/* Carte latérale */
-
 .profile-side-card {
   padding: 19px;
 }
@@ -1565,8 +1749,6 @@
   text-align: right;
 }
 
-/* Sauvegarde */
-
 .profile-save-card {
   padding: 18px;
 }
@@ -1587,8 +1769,6 @@
 .profile-save-actions .btn {
   flex: 1;
 }
-
-/* Responsive */
 
 @media (max-width: 900px) {
   .profile-stats {
@@ -1620,7 +1800,7 @@
 }
 
 /* ==========================================================================
-   V0.2 — Profil public
+   Profil public
    ========================================================================== */
 
 .public-profile-page {
@@ -1708,7 +1888,10 @@
     grid-template-columns: 1fr;
   }
 }
-/* Amis — profils cliquables */
+
+/* ==========================================================================
+   Amis — profils cliquables
+   ========================================================================== */
 
 .friend-profile-button {
   display: flex;
@@ -1759,6 +1942,10 @@
   }
 }
 
+/* ==========================================================================
+   Chat live
+   ========================================================================== */
+
 .chat-live-indicator {
   margin-left: auto;
   display: flex;
@@ -1777,7 +1964,9 @@
   border-radius: 50%;
   background: #35e58a;
   box-shadow: 0 0 8px #35e58a;
-  animation: chat-live-pulse 1.5s ease-in-out infinite;
+  animation:
+    chat-live-pulse
+    1.5s ease-in-out infinite;
 }
 
 @keyframes chat-live-pulse {
@@ -1792,7 +1981,7 @@
 }
 
 /* ==========================================================================
-   V0.2 — Notifications temps réel
+   Notifications
    ========================================================================== */
 
 .notifications-header {
@@ -1858,8 +2047,11 @@
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--glow);
-  box-shadow: 0 0 10px var(--glow);
-  animation: notification-pulse 1.5s ease-in-out infinite;
+  box-shadow:
+    0 0 10px var(--glow);
+  animation:
+    notification-pulse
+    1.5s ease-in-out infinite;
 }
 
 .notifications-live {
@@ -1879,7 +2071,9 @@
   border-radius: 50%;
   background: #35e58a;
   box-shadow: 0 0 8px #35e58a;
-  animation: notification-live-pulse 1.5s ease-in-out infinite;
+  animation:
+    notification-live-pulse
+    1.5s ease-in-out infinite;
 }
 
 @keyframes notification-pulse {
@@ -1921,7 +2115,7 @@
 }
 
 /* ==========================================================================
-   V0.2 — Badges Sidebar
+   Badges Sidebar
    ========================================================================== */
 
 .nav-item {
@@ -1955,7 +2149,9 @@
 }
 
 .nav-badge-new {
-  animation: sidebar-badge-pop 0.3s ease;
+  animation:
+    sidebar-badge-pop
+    0.3s ease;
 }
 
 .sidebar.collapsed .nav-item {
@@ -1992,7 +2188,7 @@
 }
 
 /* ==========================================================================
-   V0.2 — GamerLink Dashboard
+   Dashboard
    ========================================================================== */
 
 .home-page {
@@ -2138,7 +2334,8 @@
 
 .home-row-arrow {
   color: var(--muted);
-  transition: transform 0.15s ease;
+  transition:
+    transform 0.15s ease;
 }
 
 .home-friend-row:hover .home-row-arrow {
@@ -2298,7 +2495,7 @@
 }
 
 /* ==========================================================================
-   V0.2 — Gamer Finder
+   Gamer Finder
    ========================================================================== */
 
 .search-page {
@@ -2374,7 +2571,11 @@
 
 .search-results-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
   gap: 14px;
 }
 
@@ -2389,7 +2590,9 @@
 .player-card:hover {
   transform: translateY(-3px);
   border-color: var(--panel-border-strong);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 12px 35px
+    rgba(0, 0, 0, 0.25);
 }
 
 .player-card-header {
@@ -2512,10 +2715,166 @@
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   Logo Sidebar
+   ========================================================================== */
+
 .sidebar-logo-img {
   width: 30px;
   height: 30px;
   border-radius: 9px;
   object-fit: cover;
   flex-shrink: 0;
+}
+/* ==========================================================
+   🎮 JEU ACTUEL — AFFICHAGE GLOBAL
+   ========================================================== */
+
+.current-game-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 11px 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(53, 229, 138, 0.09),
+      rgba(123, 47, 247, 0.07)
+    );
+
+  border: 1px solid rgba(53, 229, 138, 0.22);
+  border-radius: 12px;
+
+  box-shadow:
+    0 0 20px rgba(53, 229, 138, 0.05);
+
+  animation: current-game-appear 0.25s ease;
+}
+
+.current-game-display-icon {
+  width: 36px;
+  height: 36px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: rgba(53, 229, 138, 0.1);
+  border: 1px solid rgba(53, 229, 138, 0.2);
+
+  font-size: 1rem;
+}
+
+.current-game-display-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.current-game-display-label {
+  color: #35e58a;
+
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+.current-game-display-info strong {
+  margin-top: 2px;
+
+  color: var(--text);
+
+  font-size: 0.82rem;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.current-game-display-dot {
+  width: 7px;
+  height: 7px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #35e58a;
+
+  box-shadow:
+    0 0 10px #35e58a;
+
+  animation: current-game-pulse 1.5s ease-in-out infinite;
+}
+
+/* Version compacte */
+
+.current-game-display.compact {
+  padding: 7px 9px;
+  gap: 8px;
+}
+
+.current-game-display.compact
+  .current-game-display-icon {
+  width: 28px;
+  height: 28px;
+
+  border-radius: 8px;
+
+  font-size: 0.8rem;
+}
+
+.current-game-display.compact
+  .current-game-display-label {
+  font-size: 0.48rem;
+}
+
+.current-game-display.compact
+  .current-game-display-info strong {
+  font-size: 0.72rem;
+}
+
+.current-game-display.compact
+  .current-game-display-dot {
+  width: 6px;
+  height: 6px;
+}
+
+@keyframes current-game-appear {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes current-game-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

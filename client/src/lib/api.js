@@ -8,44 +8,68 @@ export function getToken() {
 }
 
 export function setToken(token) {
-  if (token) sessionStorage.setItem(TOKEN_KEY, token);
-  else sessionStorage.removeItem(TOKEN_KEY);
+  if (token) {
+    sessionStorage.setItem(TOKEN_KEY, token);
+  } else {
+    sessionStorage.removeItem(TOKEN_KEY);
+  }
 }
 
-async function request(path, { method = "GET", body, auth = true } = {}) {
+async function request(
+  path,
+  {
+    method = "GET",
+    body,
+    auth = true,
+  } = {}
+) {
   const headers = {
     "Content-Type": "application/json",
   };
 
   if (auth) {
     const token = getToken();
+
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
   }
 
-  const res = await fetch(`${API_URL}/api${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const res = await fetch(
+    `${API_URL}/api${path}`,
+    {
+      method,
+      headers,
+      body: body
+        ? JSON.stringify(body)
+        : undefined,
+    }
+  );
 
   let data = null;
 
   try {
     data = await res.json();
   } catch {
-    // Pas de corps JSON (ex: 204)
+    // Pas de corps JSON
+    // (ex: 204)
   }
 
   if (!res.ok) {
-    throw new Error(data?.error || `Erreur réseau (${res.status})`);
+    throw new Error(
+      data?.error ||
+        `Erreur réseau (${res.status})`
+    );
   }
 
   return data;
 }
 
 export const api = {
+  // ==========================================================
+  // AUTHENTIFICATION
+  // ==========================================================
+
   register: (payload) =>
     request("/auth/register", {
       method: "POST",
@@ -65,45 +89,64 @@ export const api = {
       method: "POST",
     }),
 
-  me: () => request("/auth/me"),
+  me: () =>
+    request("/auth/me"),
 
-  getProfile: (id) =>
-    request(`/users/${id}`),
+ // ==========================================================
+// PROFIL
+// ==========================================================
 
-  updateProfile: (payload) =>
-    request("/users/me", {
-      method: "PATCH",
-      body: payload,
-    }),
+getProfile: (id) =>
+  request(`/users/${id}`),
 
-  setStatus: (status) =>
-    request("/users/me/status", {
-      method: "PATCH",
-      body: { status },
-    }),
+updateProfile: (payload) =>
+  request("/users/me", {
+    method: "PATCH",
+    body: payload,
+  }),
 
-  deleteAccount: () =>
-    request("/users/me", {
-      method: "DELETE",
-    }),
+setCurrentGame: (gameId) =>
+  request("/users/me", {
+    method: "PATCH",
+    body: {
+      current_game_id: gameId,
+    },
+  }),
+
+deleteAccount: () =>
+  request("/users/me", {
+    method: "DELETE",
+  }),
+  // ==========================================================
+  // AMIS
+  // ==========================================================
 
   getFriends: () =>
     request("/friends"),
 
   sendFriendRequest: (targetId) =>
-    request(`/friends/request/${targetId}`, {
-      method: "POST",
-    }),
+    request(
+      `/friends/request/${targetId}`,
+      {
+        method: "POST",
+      }
+    ),
 
   acceptFriendRequest: (requesterId) =>
-    request(`/friends/accept/${requesterId}`, {
-      method: "POST",
-    }),
+    request(
+      `/friends/accept/${requesterId}`,
+      {
+        method: "POST",
+      }
+    ),
 
   declineFriendRequest: (requesterId) =>
-    request(`/friends/decline/${requesterId}`, {
-      method: "POST",
-    }),
+    request(
+      `/friends/decline/${requesterId}`,
+      {
+        method: "POST",
+      }
+    ),
 
   removeFriend: (friendId) =>
     request(`/friends/${friendId}`, {
@@ -111,55 +154,103 @@ export const api = {
     }),
 
   blockUser: (targetId) =>
-    request(`/friends/block/${targetId}`, {
-      method: "POST",
-    }),
+    request(
+      `/friends/block/${targetId}`,
+      {
+        method: "POST",
+      }
+    ),
 
   searchPlayers: (params = {}) =>
     request(
       `/friends/search/players?${new URLSearchParams(
         Object.fromEntries(
           Object.entries(params).filter(
-            ([, v]) => v !== "" && v != null
+            ([, v]) =>
+              v !== "" &&
+              v != null
           )
         )
       )}`
     ),
 
+  // ==========================================================
+  // MESSAGES
+  // ==========================================================
+
   getConversations: () =>
-    request("/messages/conversations"),
+    request(
+      "/messages/conversations"
+    ),
 
   getThread: (userId) =>
-    request(`/messages/with/${userId}`),
+    request(
+      `/messages/with/${userId}`
+    ),
 
-  sendMessage: (userId, content) =>
-    request(`/messages/with/${userId}`, {
-      method: "POST",
-      body: { content },
-    }),
+  sendMessage: (
+    userId,
+    content
+  ) =>
+    request(
+      `/messages/with/${userId}`,
+      {
+        method: "POST",
+        body: {
+          content,
+        },
+      }
+    ),
 
-  // 💬 CHAT DE SQUAD
+  // ==========================================================
+  // CHAT DE SQUAD
+  // ==========================================================
+
   getSquadMessages: (squadId) =>
-    request(`/messages/squad/${squadId}`),
+    request(
+      `/messages/squad/${squadId}`
+    ),
 
-  sendSquadMessage: (squadId, content) =>
-    request(`/messages/squad/${squadId}`, {
-      method: "POST",
-      body: { content },
-    }),
+  sendSquadMessage: (
+    squadId,
+    content
+  ) =>
+    request(
+      `/messages/squad/${squadId}`,
+      {
+        method: "POST",
+        body: {
+          content,
+        },
+      }
+    ),
+
+  // ==========================================================
+  // NOTIFICATIONS
+  // ==========================================================
 
   getNotifications: () =>
     request("/notifications"),
 
   markNotificationRead: (id) =>
-    request(`/notifications/${id}/read`, {
-      method: "POST",
-    }),
+    request(
+      `/notifications/${id}/read`,
+      {
+        method: "POST",
+      }
+    ),
 
   markAllNotificationsRead: () =>
-    request("/notifications/read-all", {
-      method: "POST",
-    }),
+    request(
+      "/notifications/read-all",
+      {
+        method: "POST",
+      }
+    ),
+
+  // ==========================================================
+  // JEUX
+  // ==========================================================
 
   getGamesCatalog: () =>
     request("/games"),
@@ -168,21 +259,48 @@ export const api = {
     request("/games/mine"),
 
   addGameToLibrary: (gameId) =>
-    request(`/games/mine/${gameId}`, {
+    request(
+      `/games/mine/${gameId}`,
+      {
+        method: "POST",
+      }
+    ),
+
+  addPlaytime: (
+    gameId,
+    minutes
+  ) =>
+    request("/games/playtime", {
       method: "POST",
+      body: {
+        gameId,
+        minutes,
+      },
     }),
 
-  setCurrentGame: (gameId) =>
-    request("/games/status", {
-      method: "PATCH",
-      body: { gameId },
+  savePlaytime: (
+    gameId,
+    minutes
+  ) =>
+    request("/games/playtime", {
+      method: "POST",
+      body: {
+        gameId,
+        minutes,
+      },
     }),
+
+  // ==========================================================
+  // SQUADS
+  // ==========================================================
 
   getSquads: (gameId = "") =>
     request(
       `/squads${
         gameId
-          ? `?game=${encodeURIComponent(gameId)}`
+          ? `?game=${encodeURIComponent(
+              gameId
+            )}`
           : ""
       }`
     ),
@@ -197,22 +315,37 @@ export const api = {
     }),
 
   joinSquad: (id) =>
-    request(`/squads/${id}/join`, {
-      method: "POST",
-    }),
+    request(
+      `/squads/${id}/join`,
+      {
+        method: "POST",
+      }
+    ),
 
   leaveSquad: (id) =>
-    request(`/squads/${id}/leave`, {
-      method: "POST",
-    }),
+    request(
+      `/squads/${id}/leave`,
+      {
+        method: "POST",
+      }
+    ),
 
   deleteSquad: (id) =>
-    request(`/squads/${id}`, {
-      method: "DELETE",
-    }),
+    request(
+      `/squads/${id}`,
+      {
+        method: "DELETE",
+      }
+    ),
 
-  inviteToSquad: (squadId, userId) =>
-    request(`/squads/${squadId}/invite/${userId}`, {
-      method: "POST",
-    }),
+  inviteToSquad: (
+    squadId,
+    userId
+  ) =>
+    request(
+      `/squads/${squadId}/invite/${userId}`,
+      {
+        method: "POST",
+      }
+    ),
 };

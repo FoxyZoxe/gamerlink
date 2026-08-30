@@ -1,21 +1,45 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
+
+import { useNavigate } from "react-router-dom";
+
 import { api } from "../lib/api.js";
 import { useToast } from "../context/ToastContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Games() {
+  const navigate = useNavigate();
   const showToast = useToast();
-  const { user, refreshUser } = useAuth();
+
+  const {
+    user,
+    currentGame,
+  } = useAuth();
+
+  // ==========================================================
+  // ÉTATS
+  // ==========================================================
 
   const [catalog, setCatalog] = useState([]);
   const [myGames, setMyGames] = useState([]);
   const [friends, setFriends] = useState([]);
 
   const [search, setSearch] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
 
-  async function load() {
+  const [currentPlaytime, setCurrentPlaytime] = useState(0);
+
+  // ==========================================================
+  // CHARGEMENT DES DONNÉES
+  // ==========================================================
+
+  const load = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -29,163 +53,435 @@ export default function Games() {
         api.getFriends(),
       ]);
 
-      setCatalog(catalogRes.games || []);
-      setMyGames(mineRes.userGames || []);
-      setFriends(friendsRes.friends || []);
-    } catch (err) {
-      showToast(`⚠ ${err.message}`);
+      setCatalog(
+        catalogRes?.games || []
+      );
+
+      setMyGames(
+        mineRes?.userGames || []
+      );
+
+      setFriends(
+        friendsRes?.friends || []
+      );
+
+      console.log("✅ Jeux chargés");
+    } catch (error) {
+      console.error(
+        "❌ Erreur chargement Jeux :",
+        error
+      );
+
+      showToast(
+        `⚠ ${error.message}`
+      );
     } finally {
       setLoading(false);
     }
-  }
+  }, [showToast]);
+
+  // ==========================================================
+  // PREMIER CHARGEMENT
+  // ==========================================================
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  // ==========================================================
+  // JEU DÉTECTÉ / ARRÊTÉ
+  // ==========================================================
+
+  useEffect(() => {
+    function handleGameUpdated(event) {
+      const detectedGame =
+        event?.detail?.game || null;
+
+      console.log(
+        "🎮 Games.jsx reçoit :",
+        detectedGame?.name || "aucun jeu"
+      );
+
+      if (!detectedGame) {
+        setCurrentPlaytime(0);
+      }
+
+      // IMPORTANT :
+      // On recharge seulement les jeux/friends.
+      // On NE fait PAS refreshUser() ici.
+      //
+      // currentGame vient directement du AuthContext.
+      load();
+    }
+
+    window.addEventListener(
+      "gamerlink-game-updated",
+      handleGameUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "gamerlink-game-updated",
+        handleGameUpdated
+      );
+    };
+  }, [load]);
+
+  // ==========================================================
+  // COMPTEUR DE TEMPS
+  // ==========================================================
+
+  useEffect(() => {
+    function handlePlaytimeUpdated(event) {
+      const seconds = Number(
+        event?.detail?.seconds || 0
+      );
+
+      setCurrentPlaytime(seconds);
+    }
+
+    window.addEventListener(
+      "gamerlink-playtime-updated",
+      handlePlaytimeUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "gamerlink-playtime-updated",
+        handlePlaytimeUpdated
+      );
+    };
   }, []);
 
+  // ==========================================================
+  // LOG DEBUG JEU ACTUEL
+  // ==========================================================
+
+  useEffect(() => {
+    console.log(
+      "🎮 Games.jsx currentGame :",
+      currentGame?.name || "aucun jeu"
+    );
+  }, [currentGame]);
+
+  // ==========================================================
+  // FORMAT COMPTEUR
+  // ==========================================================
+
+  function formatPlaytime(seconds) {
+    const totalSeconds = Math.max(
+      0,
+      Math.floor(Number(seconds) || 0)
+    );
+
+    const hours = Math.floor(
+      totalSeconds / 3600
+    );
+
+    const minutes = Math.floor(
+      (totalSeconds % 3600) / 60
+    );
+
+    const secs =
+      totalSeconds % 60;
+
+    return `${String(hours).padStart(
+      2,
+      "0"
+    )}:${String(minutes).padStart(
+      2,
+      "0"
+    )}:${String(secs).padStart(
+      2,
+      "0"
+    )}`;
+  }
+
+  // ==========================================================
+  // FORMAT HEURES
+  // ==========================================================
+
+  function formatHours(minutes) {
+    const totalMinutes = Math.max(
+      0,
+      Math.floor(Number(minutes) || 0)
+    );
+
+    const hours = Math.floor(
+      totalMinutes / 60
+    );
+
+    const remainingMinutes =
+      totalMinutes % 60;
+
+    if (hours === 0) {
+      return `${remainingMinutes} min`;
+    }
+
+    if (remainingMinutes === 0) {
+      return `${hours} h`;
+    }
+
+    return `${hours} h ${String(
+      remainingMinutes
+    ).padStart(2, "0")} min`;
+  }
+
+  // ==========================================================
+  // JEUX POSSÉDÉS
+  // ==========================================================
+
   const ownedIds = useMemo(
-    () => new Set(myGames.map((game) => game.game_id)),
+    () =>
+      new Set(
+        myGames.map(
+          (game) =>
+            String(game.game_id)
+        )
+      ),
     [myGames]
   );
+
+  // ==========================================================
+  // TEMPS TOTAL
+  // ==========================================================
 
   const totalMinutes = useMemo(
     () =>
       myGames.reduce(
         (sum, game) =>
-          sum + Number(game.playtime_minutes || 0),
+          sum +
+          Number(
+            game.playtime_minutes || 0
+          ),
         0
       ),
     [myGames]
   );
 
-  const currentGame = useMemo(
-    () =>
-      catalog.find(
-        (game) =>
-          game.id === user?.current_game_id
-      ),
-    [catalog, user]
-  );
+  // ==========================================================
+  // RECHERCHE
+  // ==========================================================
 
   const filteredCatalog = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = search
+      .trim()
+      .toLowerCase();
 
-    if (!query) return catalog;
+    if (!query) {
+      return catalog;
+    }
 
-    return catalog.filter((game) =>
-      game.name
-        ?.toLowerCase()
-        .includes(query)
+    return catalog.filter(
+      (game) =>
+        game.name
+          ?.toLowerCase()
+          .includes(query)
     );
   }, [catalog, search]);
+
+  // ==========================================================
+  // AMIS EN JEU
+  // ==========================================================
 
   const playingFriends = useMemo(
     () =>
       friends.filter(
         (friend) =>
           friend.status === "in_game" ||
-          friend.current_game_id
+          Boolean(friend.current_game_id)
       ),
     [friends]
   );
 
-  async function setCurrentGame(gameId) {
+  // ==========================================================
+  // ARRÊTER LE JEU
+  // ==========================================================
+
+  async function stopCurrentGame() {
     try {
-      setActionLoading(
-        gameId || "stop"
-      );
+      setActionLoading("stop");
 
-      await api.setCurrentGame(gameId);
+      await api.setCurrentGame(null);
 
-      await refreshUser();
+      setCurrentPlaytime(0);
+
       await load();
 
-      if (gameId) {
-        const game = catalog.find(
-          (item) => item.id === gameId
-        );
+      showToast(
+        "✓ Tu as arrêté de jouer"
+      );
+    } catch (error) {
+      console.error(
+        "❌ Erreur arrêt du jeu :",
+        error
+      );
 
-        showToast(
-          `🎮 ${game?.name || "Jeu"} lancé`
-        );
-      } else {
-        showToast(
-          "✓ Tu as arrêté de jouer"
-        );
-      }
-    } catch (err) {
-      showToast(`⚠ ${err.message}`);
+      showToast(
+        `⚠ ${error.message}`
+      );
     } finally {
       setActionLoading(null);
     }
   }
+
+  // ==========================================================
+  // LANCER UN JEU
+  // ==========================================================
+
+  async function launchGame(game) {
+    try {
+      if (!game) {
+        throw new Error(
+          "Jeu introuvable."
+        );
+      }
+
+      if (
+        !window.gamerlinkDesktop?.launchGame
+      ) {
+        throw new Error(
+          "Le système de lancement GamerLink n'est pas disponible."
+        );
+      }
+
+      setActionLoading(game.id);
+
+      console.log(
+        "🚀 Lancement demandé :",
+        game
+      );
+
+      const result =
+        await window.gamerlinkDesktop.launchGame(
+          game
+        );
+
+      if (
+        result &&
+        result.success === false
+      ) {
+        throw new Error(
+          result.error ||
+            "Impossible de lancer le jeu."
+        );
+      }
+
+      showToast(
+        `🚀 Lancement de ${game.name}...`
+      );
+    } catch (error) {
+      console.error(
+        "❌ Erreur lancement :",
+        error
+      );
+
+      showToast(
+        `⚠ ${error.message}`
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  // ==========================================================
+  // AJOUTER UN JEU
+  // ==========================================================
 
   async function addGame(gameId) {
     try {
-      setActionLoading(`add-${gameId}`);
+      const loadingId =
+        `add-${gameId}`;
 
-      await api.addGameToLibrary(gameId);
+      setActionLoading(loadingId);
 
-      showToast("✓ Jeu ajouté à ta bibliothèque");
+      await api.addGameToLibrary(
+        gameId
+      );
+
+      showToast(
+        "✓ Jeu ajouté à ta bibliothèque"
+      );
 
       await load();
-    } catch (err) {
-      showToast(`⚠ ${err.message}`);
+    } catch (error) {
+      console.error(
+        "❌ Erreur ajout jeu :",
+        error
+      );
+
+      showToast(
+        `⚠ ${error.message}`
+      );
     } finally {
       setActionLoading(null);
     }
   }
 
-  function formatHours(minutes) {
-    const hours = Math.floor(
-      Number(minutes || 0) / 60
+  // ==========================================================
+  // OUVRIR DÉTAILS
+  // ==========================================================
+
+  function openGameDetails(gameId) {
+    navigate(
+      `/jeux/${gameId}`
     );
-
-    if (hours === 0) {
-      return `${Math.round(
-        Number(minutes || 0)
-      )} min`;
-    }
-
-    return `${hours} h`;
   }
+
+  // ==========================================================
+  // INTERFACE
+  // ==========================================================
 
   return (
     <div className="games-page">
 
-      {/* HEADER */}
+      {/* ======================================================
+          HEADER
+      ====================================================== */}
+
       <div className="page-header games-header">
+
         <div>
           <div className="eyebrow">
             GAMERLINK GAME HUB
           </div>
 
-          <h1>🎮 Mes jeux</h1>
+          <h1>
+            🎮 Mes jeux
+          </h1>
 
           <p>
-            Ta bibliothèque, ton activité et
-            tes prochaines parties.
+            Ta bibliothèque, ton activité
+            et tes prochaines parties.
           </p>
         </div>
 
         <button
+          type="button"
           className="btn btn-ghost"
           onClick={load}
           disabled={loading}
         >
           ↻ Actualiser
         </button>
+
       </div>
 
-      {/* CURRENT GAME */}
+      {/* ======================================================
+          JEU ACTUEL
+      ====================================================== */}
+
       {currentGame && (
         <section className="current-game-card glass-card">
+
           <div className="current-game-content">
+
             <div className="current-game-icon">
               🎮
             </div>
 
             <div className="current-game-info">
+
               <div className="eyebrow">
                 🟢 ACTUELLEMENT EN JEU
               </div>
@@ -195,31 +491,70 @@ export default function Games() {
               </h2>
 
               <p>
-                Ton profil indique maintenant
-                que tu es en train de jouer.
+                Tu joues actuellement
+                à {currentGame.name}.
               </p>
+
+              <div
+                style={{
+                  marginTop: "12px",
+                  fontFamily:
+                    "var(--font-mono)",
+                  fontSize:
+                    "0.85rem",
+                  fontWeight: "700",
+                  color:
+                    "#55ff88",
+                }}
+              >
+                🟢 EN LIGNE SUR{" "}
+                {currentGame.name.toUpperCase()}
+                <br />
+
+                <span
+                  style={{
+                    opacity: 0.8,
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  ⏱️{" "}
+                  {formatPlaytime(
+                    currentPlaytime
+                  )}
+                </span>
+              </div>
+
             </div>
 
             <button
+              type="button"
               className="btn btn-ghost"
               disabled={
-                actionLoading === "stop"
+                actionLoading ===
+                "stop"
               }
-              onClick={() =>
-                setCurrentGame("")
+              onClick={
+                stopCurrentGame
               }
             >
               {actionLoading === "stop"
                 ? "Arrêt..."
                 : "⏹ Arrêter"}
             </button>
+
           </div>
+
         </section>
       )}
 
-      {/* STATS */}
+      {/* ======================================================
+          STATS
+      ====================================================== */}
+
       <section className="games-stats">
+
         <div className="glass-card game-stat">
+
           <span className="game-stat-icon">
             🎮
           </span>
@@ -233,25 +568,31 @@ export default function Games() {
               Jeux dans ma bibliothèque
             </span>
           </div>
+
         </div>
 
         <div className="glass-card game-stat">
+
           <span className="game-stat-icon">
             ⏱️
           </span>
 
           <div>
             <strong>
-              {formatHours(totalMinutes)}
+              {formatHours(
+                totalMinutes
+              )}
             </strong>
 
             <span>
               Temps de jeu total
             </span>
           </div>
+
         </div>
 
         <div className="glass-card game-stat">
+
           <span className="game-stat-icon">
             👥
           </span>
@@ -265,13 +606,20 @@ export default function Games() {
               Amis actuellement en jeu
             </span>
           </div>
+
         </div>
+
       </section>
 
-      {/* FRIENDS PLAYING */}
+      {/* ======================================================
+          AMIS EN JEU
+      ====================================================== */}
+
       {playingFriends.length > 0 && (
         <section className="section">
+
           <div className="section-title">
+
             <div>
               <div className="eyebrow">
                 ACTIVITÉ
@@ -285,54 +633,72 @@ export default function Games() {
             <span className="eyebrow">
               {playingFriends.length} en jeu
             </span>
+
           </div>
 
           <div className="friends-playing-list glass-card">
-            {playingFriends.map((friend) => {
-              const friendGame =
-                catalog.find(
-                  (game) =>
-                    game.id ===
-                    friend.current_game_id
-                );
 
-              return (
-                <div
-                  className="friend-playing-row"
-                  key={friend.id}
-                >
-                  <div className="friend-playing-avatar">
-                    {(friend.username || "?")
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+            {playingFriends.map(
+              (friend) => {
 
-                  <div className="friend-playing-info">
-                    <strong>
-                      {friend.username}
-                    </strong>
+                const friendGame =
+                  catalog.find(
+                    (game) =>
+                      String(game.id) ===
+                      String(
+                        friend.current_game_id
+                      )
+                  );
 
-                    <span>
-                      🎮{" "}
-                      {friendGame?.name ||
-                        friend.custom_status ||
-                        "En jeu"}
+                return (
+                  <div
+                    className="friend-playing-row"
+                    key={friend.id}
+                  >
+
+                    <div className="friend-playing-avatar">
+                      {(friend.username || "?")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+
+                    <div className="friend-playing-info">
+
+                      <strong>
+                        {friend.username}
+                      </strong>
+
+                      <span>
+                        🎮{" "}
+                        {friendGame?.name ||
+                          friend.custom_status ||
+                          "En jeu"}
+                      </span>
+
+                    </div>
+
+                    <span className="playing-dot">
+                      ● EN JEU
                     </span>
-                  </div>
 
-                  <span className="playing-dot">
-                    ● EN JEU
-                  </span>
-                </div>
-              );
-            })}
+                  </div>
+                );
+              }
+            )}
+
           </div>
+
         </section>
       )}
 
-      {/* LIBRARY */}
+      {/* ======================================================
+          MA BIBLIOTHÈQUE
+      ====================================================== */}
+
       <section className="section">
+
         <div className="section-title">
+
           <div>
             <div className="eyebrow">
               TA COLLECTION
@@ -349,18 +715,25 @@ export default function Games() {
               ? "x"
               : ""}
           </span>
+
         </div>
 
         {loading ? (
+
           <div className="glass-card empty-state">
+
             <div className="glyph">
               ⏳
             </div>
 
             Chargement de ta bibliothèque...
+
           </div>
+
         ) : myGames.length === 0 ? (
+
           <div className="glass-card empty-state">
+
             <div className="glyph">
               🕹️
             </div>
@@ -370,100 +743,268 @@ export default function Games() {
             </h3>
 
             <p>
-              Ajoute des jeux depuis le
-              catalogue ci-dessous.
+              Ajoute des jeux depuis
+              le catalogue ci-dessous.
             </p>
+
           </div>
+
         ) : (
+
           <div className="games-library-grid">
-            {myGames.map((userGame) => {
-              const isCurrent =
-                user?.current_game_id ===
-                userGame.game_id;
 
-              return (
-                <div
-                  className={
-                    isCurrent
-                      ? "glass-card game-library-card game-active"
-                      : "glass-card game-library-card"
-                  }
-                  key={userGame.game_id}
-                >
-                  <div className="game-card-icon">
-                    🎮
-                  </div>
+            {myGames.map(
+              (userGame) => {
 
-                  <div className="game-card-content">
-                    <div className="game-card-top">
-                      <div>
-                        <h3>
-                          {userGame.game?.name ||
-                            "Jeu inconnu"}
-                        </h3>
+                /*
+                 * IMPORTANT
+                 *
+                 * On compare directement
+                 * avec currentGame venant
+                 * du AuthContext.
+                 */
 
-                        <div className="eyebrow font-mono">
-                          {formatHours(
-                            userGame.playtime_minutes
-                          )}
-                          {" "}
-                          de jeu
-                        </div>
-                      </div>
+                const isCurrent =
+                  String(
+                    currentGame?.id || ""
+                  ) ===
+                  String(
+                    userGame.game_id
+                  );
 
-                      {isCurrent && (
-                        <span className="game-playing-badge">
-                          🟢 EN JEU
-                        </span>
-                      )}
+                const gameName =
+                  userGame.game?.name ||
+                  catalog.find(
+                    (game) =>
+                      String(game.id) ===
+                      String(
+                        userGame.game_id
+                      )
+                  )?.name ||
+                  "Jeu inconnu";
+
+                return (
+
+                  <div
+                    className={
+                      isCurrent
+                        ? "glass-card game-library-card game-active"
+                        : "glass-card game-library-card"
+                    }
+                    key={
+                      userGame.game_id
+                    }
+                  >
+
+                    {/* ICÔNE */}
+
+                    <div className="game-card-icon">
+                      🎮
                     </div>
 
-                    <div className="game-card-actions">
-                      {isCurrent ? (
+                    <div className="game-card-content">
+
+                      {/* ==================================================
+                          TITRE + STATUT
+                      ================================================== */}
+
+                      <div className="game-card-top">
+
+                        <div>
+
+                          <h3>
+                            {gameName}
+                          </h3>
+
+                          <div className="eyebrow font-mono">
+                            {formatHours(
+                              userGame.playtime_minutes
+                            )}{" "}
+                            de jeu
+                          </div>
+
+                          {/* JEU ACTUEL */}
+
+                          {isCurrent && (
+                            <div
+                              className="game-current-playtime"
+                              style={{
+                                marginTop:
+                                  "10px",
+                                color:
+                                  "#55ff88",
+                                fontSize:
+                                  "0.75rem",
+                                fontWeight:
+                                  "700",
+                                fontFamily:
+                                  "var(--font-mono)",
+                                lineHeight:
+                                  "1.6",
+                              }}
+                            >
+                              🟢 EN LIGNE SUR{" "}
+                              {gameName.toUpperCase()}
+
+                              <br />
+
+                              <span
+                                style={{
+                                  opacity:
+                                    0.8,
+                                  fontSize:
+                                    "0.7rem",
+                                }}
+                              >
+                                ⏱️{" "}
+                                {formatPlaytime(
+                                  currentPlaytime
+                                )}
+                              </span>
+                            </div>
+                          )}
+
+                        </div>
+
+                        {/* BADGE */}
+
+                        {isCurrent ? (
+
+                          <div
+                            className="game-playing-badge"
+                            style={{
+                              display:
+                                "flex",
+                              flexDirection:
+                                "column",
+                              alignItems:
+                                "flex-end",
+                              gap: "4px",
+                            }}
+                          >
+
+                            <span>
+                              🟢 EN LIGNE
+                            </span>
+
+                            <small
+                              style={{
+                                fontSize:
+                                  "0.65rem",
+                                opacity:
+                                  0.7,
+                              }}
+                            >
+                              🎮 {gameName}
+                            </small>
+
+                          </div>
+
+                        ) : (
+
+                          <span
+                            style={{
+                              fontSize:
+                                "0.7rem",
+                              opacity:
+                                0.45,
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            ⚫ Hors ligne
+                          </span>
+
+                        )}
+
+                      </div>
+
+                      {/* ==================================================
+                          BOUTONS
+                      ================================================== */}
+
+                      <div className="game-card-actions">
+
                         <button
+                          type="button"
                           className="btn btn-ghost"
-                          disabled={
-                            actionLoading ===
-                            "stop"
-                          }
                           onClick={() =>
-                            setCurrentGame("")
-                          }
-                        >
-                          ⏹ Arrêter
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-primary"
-                          disabled={
-                            actionLoading ===
-                            userGame.game_id
-                          }
-                          onClick={() =>
-                            setCurrentGame(
+                            openGameDetails(
                               userGame.game_id
                             )
                           }
                         >
-                          {actionLoading ===
-                          userGame.game_id
-                            ? "Lancement..."
-                            : "▶ Jouer"}
+                          📊 Détails
                         </button>
-                      )}
+
+                        {isCurrent ? (
+
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            disabled={
+                              actionLoading ===
+                              "stop"
+                            }
+                            onClick={
+                              stopCurrentGame
+                            }
+                          >
+                            {actionLoading ===
+                            "stop"
+                              ? "Arrêt..."
+                              : "⏹ Arrêter"}
+                          </button>
+
+                        ) : (
+
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            disabled={
+                              actionLoading ===
+                              userGame.game_id
+                            }
+                            onClick={() =>
+                              launchGame(
+                                userGame.game
+                              )
+                            }
+                          >
+                            {actionLoading ===
+                            userGame.game_id
+                              ? "Lancement..."
+                              : "▶ Jouer"}
+                          </button>
+
+                        )}
+
+                      </div>
+
                     </div>
+
                   </div>
-                </div>
-              );
-            })}
+
+                );
+              }
+            )}
+
           </div>
+
         )}
+
       </section>
 
-      {/* CATALOG */}
+      {/* ======================================================
+          CATALOGUE
+      ====================================================== */}
+
       <section className="section">
+
         <div className="section-title">
+
           <div>
+
             <div className="eyebrow">
               GAMERLINK
             </div>
@@ -471,6 +1012,7 @@ export default function Games() {
             <h2>
               Catalogue de jeux
             </h2>
+
           </div>
 
           <span className="eyebrow">
@@ -479,10 +1021,15 @@ export default function Games() {
               ? "s"
               : ""}
           </span>
+
         </div>
 
+        {/* RECHERCHE */}
+
         <div className="games-catalog-toolbar glass-card">
+
           <div className="field">
+
             <label>
               Rechercher un jeu
             </label>
@@ -491,62 +1038,141 @@ export default function Games() {
               type="search"
               placeholder="Minecraft, Fortnite, Valheim..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
               }
             />
+
           </div>
+
         </div>
 
+        {/* RÉSULTATS */}
+
         {filteredCatalog.length === 0 ? (
+
           <div className="glass-card empty-state">
+
             <div className="glyph">
               🔎
             </div>
 
-            Aucun jeu trouvé.
+            <h3>
+              Aucun jeu trouvé
+            </h3>
+
+            <p>
+              Essaie une autre recherche.
+            </p>
+
           </div>
+
         ) : (
+
           <div className="catalog-list glass-card">
+
             {filteredCatalog.map(
-              (game, index) => {
+              (game) => {
+
                 const owned =
-                  ownedIds.has(game.id);
+                  ownedIds.has(
+                    String(game.id)
+                  );
+
+                const isPlaying =
+                  String(
+                    currentGame?.id || ""
+                  ) ===
+                  String(game.id);
 
                 return (
+
                   <div
-                    className="catalog-game-row"
+                    className={
+                      isPlaying
+                        ? "catalog-game-row game-active"
+                        : "catalog-game-row"
+                    }
                     key={game.id}
                   >
+
                     <div className="catalog-game-icon">
                       🎮
                     </div>
 
                     <div className="catalog-game-info">
+
                       <strong>
                         {game.name}
                       </strong>
 
-                      {owned && (
-                        <span>
-                          ✓ Dans ta bibliothèque
+                      {isPlaying && (
+                        <span
+                          style={{
+                            color:
+                              "#55ff88",
+                            fontWeight:
+                              "700",
+                          }}
+                        >
+                          🟢 EN LIGNE
                         </span>
                       )}
+
+                      {!isPlaying &&
+                        owned && (
+                          <span>
+                            ✓ Dans ta bibliothèque
+                          </span>
+                        )}
+
                     </div>
 
                     {owned ? (
-                      <span className="eyebrow">
-                        ✓ Possédé
-                      </span>
+
+                      <div
+                        style={{
+                          display:
+                            "flex",
+                          alignItems:
+                            "center",
+                          gap: "10px",
+                        }}
+                      >
+
+                        {isPlaying && (
+                          <span
+                            className="eyebrow"
+                            style={{
+                              color:
+                                "#55ff88",
+                            }}
+                          >
+                            EN JEU
+                          </span>
+                        )}
+
+                        <span className="eyebrow">
+                          ✓ Possédé
+                        </span>
+
+                      </div>
+
                     ) : (
+
                       <button
+                        type="button"
                         className="btn btn-ghost"
                         disabled={
                           actionLoading ===
                           `add-${game.id}`
                         }
                         onClick={() =>
-                          addGame(game.id)
+                          addGame(
+                            game.id
+                          )
                         }
                       >
                         {actionLoading ===
@@ -554,14 +1180,21 @@ export default function Games() {
                           ? "..."
                           : "+ Ajouter"}
                       </button>
+
                     )}
+
                   </div>
+
                 );
               }
             )}
+
           </div>
+
         )}
+
       </section>
+
     </div>
   );
 }

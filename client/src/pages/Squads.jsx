@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { api } from "../lib/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import Avatar from "../components/Avatar.jsx";
 
 export default function Squads() {
+  const navigate = useNavigate();
+
   const { user } = useAuth();
   const showToast = useToast();
 
@@ -29,16 +33,19 @@ export default function Squads() {
     try {
       setLoading(true);
 
-      const [gamesRes, squadsRes, friendsRes] = await Promise.all([
-        api.getGamesCatalog(),
-        api.getSquads(gameFilter),
-        api.getFriends(),
-      ]);
+      const [gamesRes, squadsRes, friendsRes] =
+        await Promise.all([
+          api.getGamesCatalog(),
+          api.getSquads(gameFilter),
+          api.getFriends(),
+        ]);
 
-      setGames(gamesRes.games || []);
-      setSquads(squadsRes.squads || []);
-      setFriends(friendsRes.friends || []);
+      setGames(gamesRes?.games || []);
+      setSquads(squadsRes?.squads || []);
+      setFriends(friendsRes?.friends || []);
     } catch (err) {
+      console.error("Erreur chargement squads :", err);
+
       showToast(`⚠ ${err.message}`);
     } finally {
       setLoading(false);
@@ -49,32 +56,46 @@ export default function Squads() {
     load();
   }, [gameFilter]);
 
-  const mine = useMemo(
-    () =>
-      squads.filter((s) =>
-        s.members?.some((m) => m.id === user?.id)
-      ),
-    [squads, user]
-  );
+  const mine = useMemo(() => {
+    return squads.filter((squad) =>
+      squad.members?.some(
+        (member) =>
+          String(member.id) === String(user?.id)
+      )
+    );
+  }, [squads, user]);
 
   const available = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return squads
-      .filter((s) => !mine.some((m) => m.id === s.id))
-      .filter((s) => {
+      .filter(
+        (squad) =>
+          !mine.some(
+            (mySquad) =>
+              String(mySquad.id) ===
+              String(squad.id)
+          )
+      )
+      .filter((squad) => {
         if (!query) return true;
 
         return (
-          s.name?.toLowerCase().includes(query) ||
-          s.description?.toLowerCase().includes(query) ||
-          s.game?.name?.toLowerCase().includes(query)
+          squad.name
+            ?.toLowerCase()
+            .includes(query) ||
+          squad.description
+            ?.toLowerCase()
+            .includes(query) ||
+          squad.game?.name
+            ?.toLowerCase()
+            .includes(query)
         );
       });
   }, [squads, mine, search]);
 
-  async function create(e) {
-    e.preventDefault();
+  async function create(event) {
+    event.preventDefault();
 
     if (!form.gameId) {
       showToast("⚠ Choisis un jeu");
@@ -104,8 +125,11 @@ export default function Squads() {
       });
 
       setShowCreate(false);
+
       await load();
     } catch (err) {
+      console.error("Erreur création squad :", err);
+
       showToast(`⚠ ${err.message}`);
     } finally {
       setCreating(false);
@@ -115,50 +139,92 @@ export default function Squads() {
   async function action(fn, success) {
     try {
       await fn();
+
       showToast(`✓ ${success}`);
+
       await load();
     } catch (err) {
+      console.error("Erreur action squad :", err);
+
       showToast(`⚠ ${err.message}`);
     }
   }
 
+  function openSquad(squadId) {
+    if (!squadId) {
+      showToast("⚠ Impossible d'ouvrir cette squad");
+      return;
+    }
+
+    navigate(`/squads/${squadId}`);
+  }
+
   return (
     <div className="page">
-      {/* HEADER */}
-      <div className="page-header squad-hero">
-        <div>
-          <div className="eyebrow">GAMERLINK V0.2</div>
 
-          <h1>👥 Squads</h1>
+      {/* =========================================================
+          HEADER
+      ========================================================= */}
+
+      <div className="page-header squad-hero">
+
+        <div>
+          <div className="eyebrow">
+            GAMERLINK V0.2
+          </div>
+
+          <h1>
+            👥 Squads
+          </h1>
 
           <p>
-            Trouve des joueurs, crée ton équipe et lance une partie.
+            Trouve des joueurs, crée ton équipe
+            et lance une partie.
           </p>
         </div>
 
         <button
+          type="button"
           className="btn btn-primary"
-          onClick={() => setShowCreate((value) => !value)}
+          onClick={() =>
+            setShowCreate(
+              (value) => !value
+            )
+          }
         >
-          {showCreate ? "Fermer" : "+ Créer une squad"}
+          {showCreate
+            ? "Fermer"
+            : "+ Créer une squad"}
         </button>
+
       </div>
 
-      {/* CREATE */}
+      {/* =========================================================
+          CREATION
+      ========================================================= */}
+
       {showCreate && (
         <form
           className="glass-card squad-create"
           onSubmit={create}
         >
+
           <div className="section-title">
+
             <div>
-              <div className="eyebrow">NOUVELLE ÉQUIPE</div>
-              <h2>Créer une squad</h2>
+              <div className="eyebrow">
+                NOUVELLE ÉQUIPE
+              </div>
+
+              <h2>
+                Créer une squad
+              </h2>
             </div>
 
             <span className="eyebrow">
               jusqu'à 8 joueurs
             </span>
+
           </div>
 
           <div
@@ -168,60 +234,81 @@ export default function Squads() {
                 "repeat(auto-fit, minmax(220px, 1fr))",
             }}
           >
+
             <div className="field">
-              <label>Jeu</label>
+
+              <label>
+                Jeu
+              </label>
 
               <select
                 required
                 value={form.gameId}
-                onChange={(e) =>
+                onChange={(event) =>
                   setForm({
                     ...form,
-                    gameId: e.target.value,
+                    gameId:
+                      event.target.value,
                   })
                 }
               >
+
                 <option value="">
                   Choisir un jeu
                 </option>
 
                 {games.map((game) => (
-                  <option key={game.id} value={game.id}>
+                  <option
+                    key={game.id}
+                    value={game.id}
+                  >
                     {game.name}
                   </option>
                 ))}
+
               </select>
+
             </div>
 
             <div className="field">
-              <label>Nom de la squad</label>
+
+              <label>
+                Nom de la squad
+              </label>
 
               <input
                 required
                 maxLength={40}
                 placeholder="Ex : Ranked ce soir"
                 value={form.name}
-                onChange={(e) =>
+                onChange={(event) =>
                   setForm({
                     ...form,
-                    name: e.target.value,
+                    name:
+                      event.target.value,
                   })
                 }
               />
+
             </div>
+
           </div>
 
           <div className="field">
-            <label>Description</label>
+
+            <label>
+              Description
+            </label>
 
             <input
               maxLength={160}
               placeholder="Ex : chill, micro obligatoire, niveau moyen..."
               value={form.description}
-              onChange={(e) =>
+              onChange={(event) =>
                 setForm({
                   ...form,
-                  description: e.target.value,
+                  description:
+                    event.target.value,
                 })
               }
             />
@@ -229,18 +316,23 @@ export default function Squads() {
             <small>
               {form.description.length}/160
             </small>
+
           </div>
 
           <div className="squad-create-actions">
+
             <button
               type="button"
               className="btn btn-ghost"
-              onClick={() => setShowCreate(false)}
+              onClick={() =>
+                setShowCreate(false)
+              }
             >
               Annuler
             </button>
 
             <button
+              type="submit"
               className="btn btn-primary"
               disabled={creating}
             >
@@ -248,194 +340,334 @@ export default function Squads() {
                 ? "Création..."
                 : "🚀 Créer la squad"}
             </button>
+
           </div>
+
         </form>
       )}
 
-      {/* MY SQUADS */}
+      {/* =========================================================
+          MES SQUADS
+      ========================================================= */}
+
       <div className="section">
+
         <div className="section-title">
+
           <div>
-            <div className="eyebrow">TON ÉQUIPEMENT</div>
-            <h2>Mes squads</h2>
+            <div className="eyebrow">
+              TON ÉQUIPEMENT
+            </div>
+
+            <h2>
+              Mes squads
+            </h2>
           </div>
 
           <span className="eyebrow">
             {mine.length} active
             {mine.length > 1 ? "s" : ""}
           </span>
+
         </div>
 
         {mine.length === 0 ? (
-          <div className="glass-card empty-state">
-            <div className="glyph">🚀</div>
 
-            <h3>Aucune squad pour le moment</h3>
+          <div className="glass-card empty-state">
+
+            <div className="glyph">
+              🚀
+            </div>
+
+            <h3>
+              Aucune squad pour le moment
+            </h3>
 
             <p>
-              Crée ta première équipe ou rejoins des joueurs
-              disponibles.
+              Crée ta première équipe ou
+              rejoins des joueurs disponibles.
             </p>
 
             <button
+              type="button"
               className="btn btn-primary"
-              onClick={() => setShowCreate(true)}
+              onClick={() =>
+                setShowCreate(true)
+              }
             >
               + Créer ma squad
             </button>
+
           </div>
+
         ) : (
+
           <div className="grid grid-2">
+
             {mine.map((squad) => (
+
               <SquadCard
                 key={squad.id}
                 squad={squad}
                 user={user}
                 friends={friends}
                 onAction={action}
+                onOpen={openSquad}
                 mine
               />
+
             ))}
+
           </div>
+
         )}
+
       </div>
 
-      {/* AVAILABLE SQUADS */}
+      {/* =========================================================
+          SQUADS DISPONIBLES
+      ========================================================= */}
+
       <div className="section">
+
         <div className="section-title">
+
           <div>
             <div className="eyebrow">
               TROUVER DES JOUEURS
             </div>
-            <h2>Squads disponibles</h2>
+
+            <h2>
+              Squads disponibles
+            </h2>
           </div>
 
           <button
+            type="button"
             className="btn btn-ghost"
             onClick={load}
             disabled={loading}
           >
             ↻ Actualiser
           </button>
+
         </div>
 
-        {/* FILTERS */}
+        {/* FILTRES */}
+
         <div className="squad-filters glass-card">
+
           <div className="field">
-            <label>Rechercher</label>
+
+            <label>
+              Rechercher
+            </label>
 
             <input
               type="search"
               placeholder="Nom, jeu, description..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
               }
             />
+
           </div>
 
           <div className="field">
-            <label>Jeu</label>
+
+            <label>
+              Jeu
+            </label>
 
             <select
               value={gameFilter}
-              onChange={(e) =>
-                setGameFilter(e.target.value)
+              onChange={(event) =>
+                setGameFilter(
+                  event.target.value
+                )
               }
             >
+
               <option value="">
                 Tous les jeux
               </option>
 
               {games.map((game) => (
+
                 <option
                   key={game.id}
                   value={game.id}
                 >
                   {game.name}
                 </option>
+
               ))}
+
             </select>
+
           </div>
+
         </div>
 
-        {loading ? (
-          <div className="glass-card empty-state">
-            <div className="glyph">⏳</div>
-            Chargement des squads...
-          </div>
-        ) : available.length === 0 ? (
-          <div className="glass-card empty-state">
-            <div className="glyph">🛰️</div>
+        {/* RESULTATS */}
 
-            <h3>Aucune squad trouvée</h3>
+        {loading ? (
+
+          <div className="glass-card empty-state">
+
+            <div className="glyph">
+              ⏳
+            </div>
+
+            <h3>
+              Chargement...
+            </h3>
 
             <p>
-              Essaie un autre jeu ou crée ta propre équipe.
+              Recherche des squads disponibles.
+            </p>
+
+          </div>
+
+        ) : available.length === 0 ? (
+
+          <div className="glass-card empty-state">
+
+            <div className="glyph">
+              🛰️
+            </div>
+
+            <h3>
+              Aucune squad trouvée
+            </h3>
+
+            <p>
+              Essaie un autre jeu ou crée
+              ta propre équipe.
             </p>
 
             <button
+              type="button"
               className="btn btn-primary"
-              onClick={() => setShowCreate(true)}
+              onClick={() =>
+                setShowCreate(true)
+              }
             >
               + Créer une squad
             </button>
+
           </div>
+
         ) : (
+
           <div className="grid grid-2">
+
             {available.map((squad) => (
+
               <SquadCard
                 key={squad.id}
                 squad={squad}
                 user={user}
                 friends={friends}
                 onAction={action}
+                onOpen={openSquad}
               />
+
             ))}
+
           </div>
+
         )}
+
       </div>
+
     </div>
   );
 }
+
+
+/* ===============================================================
+   CARTE SQUAD
+================================================================ */
 
 function SquadCard({
   squad,
   user,
   friends,
   onAction,
-  mine,
+  onOpen,
+  mine = false,
 }) {
-  const [invite, setInvite] = useState("");
 
-  const isOwner = squad.owner_id === user?.id;
+  const [invite, setInvite] =
+    useState("");
+
+  const isOwner =
+    String(squad.owner_id) ===
+    String(user?.id);
 
   const memberCount =
     squad.memberCount ??
     squad.members?.length ??
     0;
 
-  const full = memberCount >= 8;
+  const full =
+    memberCount >= 8;
 
   const gameName =
     squad.game?.name ||
     "Jeu inconnu";
 
+  const members =
+    squad.members || [];
+
   const owner =
-    squad.members?.find(
-      (member) => member.id === squad.owner_id
+    members.find(
+      (member) =>
+        String(member.id) ===
+        String(squad.owner_id)
     );
 
   return (
-    <article className="glass-card squad-card">
-      {/* TOP */}
-      <div className="squad-card-top">
+
+    <article
+      className="glass-card squad-card"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "390px",
+        padding: "20px",
+      }}
+    >
+
+      {/* =====================================================
+          EN-TÊTE
+      ===================================================== */}
+
+      <div
+        className="squad-card-top"
+        style={{
+          display: "flex",
+          justifyContent:
+            "space-between",
+          alignItems: "flex-start",
+          gap: "15px",
+        }}
+      >
+
         <div className="squad-game">
+
           <div className="eyebrow">
             🎮 {gameName}
           </div>
 
-          <h3>{squad.name}</h3>
+          <h3>
+            {squad.name}
+          </h3>
+
         </div>
 
         <div
@@ -445,63 +677,120 @@ function SquadCard({
         >
           {memberCount}/8
         </div>
+
       </div>
 
-      {/* DESCRIPTION */}
+
+      {/* =====================================================
+          DESCRIPTION
+      ===================================================== */}
+
       <p className="squad-description">
+
         {squad.description ||
           "Aucune description."}
+
       </p>
 
-      {/* OWNER */}
+
+      {/* =====================================================
+          PROPRIETAIRE
+      ===================================================== */}
+
       {owner && (
+
         <div className="squad-owner">
+
           <Avatar
             user={owner}
-            size={28}
+            size={32}
           />
 
           <span>
             Créée par{" "}
+
             <strong>
               {owner.username}
             </strong>
           </span>
+
         </div>
+
       )}
 
-      {/* MEMBERS */}
-      <div className="squad-members">
-        {squad.members
-          ?.slice(0, 8)
-          .map((member) => (
+
+      {/* =====================================================
+          MEMBRES
+      ===================================================== */}
+
+      <div
+        className="squad-members"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          minHeight: "42px",
+          marginTop: "14px",
+        }}
+      >
+
+        {members
+          .slice(0, 8)
+          .map((member, index) => (
+
             <div
               key={member.id}
               className="squad-member"
               title={member.username}
+              style={{
+                marginLeft:
+                  index === 0
+                    ? "0"
+                    : "-8px",
+                position: "relative",
+                zIndex:
+                  10 - index,
+              }}
             >
+
               <Avatar
                 user={member}
-                size={34}
+                size={38}
               />
+
             </div>
+
           ))}
+
       </div>
 
-      {/* CAPACITY */}
-      <div className="squad-capacity">
+
+      {/* =====================================================
+          CAPACITE
+      ===================================================== */}
+
+      <div
+        className="squad-capacity"
+        style={{
+          marginTop: "15px",
+        }}
+      >
+
         <div className="squad-capacity-bar">
+
           <span
             style={{
               width: `${Math.min(
                 100,
-                (memberCount / 8) * 100
+                (memberCount / 8) *
+                  100
               )}%`,
             }}
           />
+
         </div>
 
         <span>
+
           {full
             ? "Squad complète"
             : `${8 - memberCount} place${
@@ -513,14 +802,57 @@ function SquadCard({
                   ? "s"
                   : ""
               }`}
+
         </span>
+
       </div>
 
-      {/* ACTIONS */}
-      <div className="squad-actions">
+
+      {/* =====================================================
+          ESPACE
+      ===================================================== */}
+
+      <div
+        style={{
+          flex: 1,
+        }}
+      />
+
+
+      {/* =====================================================
+          ACTIONS
+      ===================================================== */}
+
+      <div
+        className="squad-actions"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "8px",
+          marginTop: "18px",
+        }}
+      >
+
+        {/* OUVRIR */}
+
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() =>
+            onOpen(squad.id)
+          }
+        >
+          👁 Ouvrir
+        </button>
+
+
+        {/* REJOINDRE */}
+
         {!mine && !full && (
+
           <button
-            className="btn btn-primary"
+            type="button"
+            className="btn btn-ghost"
             onClick={() =>
               onAction(
                 () =>
@@ -533,19 +865,31 @@ function SquadCard({
           >
             ➕ Rejoindre
           </button>
+
         )}
 
+
+        {/* COMPLETE */}
+
         {!mine && full && (
+
           <button
+            type="button"
             className="btn btn-ghost"
             disabled
           >
             Squad complète
           </button>
+
         )}
 
+
+        {/* QUITTER */}
+
         {mine && !isOwner && (
+
           <button
+            type="button"
             className="btn btn-ghost"
             onClick={() =>
               onAction(
@@ -559,10 +903,16 @@ function SquadCard({
           >
             🚪 Quitter
           </button>
+
         )}
 
+
+        {/* SUPPRIMER */}
+
         {isOwner && (
+
           <button
+            type="button"
             className="btn btn-danger"
             onClick={() =>
               onAction(
@@ -576,18 +926,40 @@ function SquadCard({
           >
             🗑 Fermer
           </button>
+
         )}
+
       </div>
 
-      {/* INVITE */}
+
+      {/* =====================================================
+          INVITER
+      ===================================================== */}
+
       {mine && !full && (
-        <div className="squad-invite">
+
+        <div
+          className="squad-invite"
+          style={{
+            display: "flex",
+            gap: "8px",
+            marginTop: "10px",
+          }}
+        >
+
           <select
             value={invite}
-            onChange={(e) =>
-              setInvite(e.target.value)
+            onChange={(event) =>
+              setInvite(
+                event.target.value
+              )
             }
+            style={{
+              flex: 1,
+              minWidth: 0,
+            }}
           >
+
             <option value="">
               Inviter un ami...
             </option>
@@ -595,23 +967,32 @@ function SquadCard({
             {friends
               .filter(
                 (friend) =>
-                  !squad.members?.some(
+                  !members.some(
                     (member) =>
-                      member.id ===
-                      friend.id
+                      String(
+                        member.id
+                      ) ===
+                      String(
+                        friend.id
+                      )
                   )
               )
               .map((friend) => (
+
                 <option
                   key={friend.id}
                   value={friend.id}
                 >
                   {friend.username}
                 </option>
+
               ))}
+
           </select>
 
+
           <button
+            type="button"
             className="btn btn-ghost"
             disabled={!invite}
             onClick={() =>
@@ -627,8 +1008,12 @@ function SquadCard({
           >
             Inviter
           </button>
+
         </div>
+
       )}
+
     </article>
+
   );
 }

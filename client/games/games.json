@@ -1,0 +1,619 @@
+[
+  {
+    "name": "Minecraft",
+    "processes": [
+      "Minecraft.exe",
+      "Minecraft"
+    ],
+    "launchUrl": "minecraft://"
+  },
+  {
+    "name": "Valheim",
+    "processes": [
+      "valheim.exe"
+    ],
+    "launchUrl": "steam://rungameid/892970"
+  },
+  {
+    "name": "ARK Survival Evolved",
+    "processes": [
+      "ShooterGame.exe"
+    ],
+    "launchUrl": "steam://rungameid/346110"
+  },
+  {
+    "name": "GTA V",
+    "processes": [
+      "GTA5.exe"
+    ],
+    "launchUrl": "steam://rungameid/271590"
+  },
+  {
+    "name": "Red Dead Redemption 2",
+    "processes": ["RDR2.exe"]
+  },
+  {
+    "name": "Fortnite",
+    "processes": ["FortniteClient-Win64-Shipping.exe"]
+  },
+  {
+    "name": "Counter-Strike 2",
+    "processes": ["cs2.exe"]
+  },
+  {
+    "name": "League of Legends",
+    "processes": ["League of Legends.exe"]
+  },
+  {
+    "name": "Valorant",
+    "processes": ["VALORANT-Win64-Shipping.exe"]
+  },
+  {
+    "name": "Apex Legends",
+    "processes": ["r5apex.exe"]
+  },
+  {
+    "name": "Rocket League",
+    "processes": ["RocketLeague.exe"]
+  },
+  {
+    "name": "Roblox",
+    "processes": ["RobloxPlayerBeta.exe"]
+  },
+  {
+    "name": "Terraria",
+    "processes": ["Terraria.exe"]
+  },
+  {
+    "name": "Rust",
+    "processes": ["RustClient.exe"]
+  },
+  {
+    "name": "Palworld",
+    "processes": ["Palworld-Win64-Shipping.exe"]
+  },
+  {
+    "name": "Lethal Company",
+    "processes": ["Lethal Company.exe"]
+  },
+  {
+    "name": "Phasmophobia",
+    "processes": ["Phasmophobia.exe"]
+  },
+  {
+    "name": "Sea of Thieves",
+    "processes": ["SoTGame.exe"]
+  },
+  {
+    "name": "Among Us",
+    "processes": ["Among Us.exe"]
+  },
+  {
+    "name": "Fall Guys",
+    "processes": ["FallGuys_client_game.exe"]
+  },
+  {
+    "name": "The Forest",
+    "processes": ["TheForest.exe"]
+  },
+  {
+    "name": "Sons of the Forest",
+    "processes": ["SonsOfTheForest.exe"]
+  },
+  {
+    "name": "7 Days to Die",
+    "processes": ["7DaysToDie.exe", "7DaysToDie_EAC.exe"]
+  },
+  {
+    "name": "Project Zomboid",
+    "processes": ["ProjectZomboid64.exe", "ProjectZomboid32.exe"]
+  },
+  {
+    "name": "Don't Starve Together",
+    "processes": ["dontstarve_steam.exe"]
+  },
+  {
+    "name": "Subnautica",
+    "processes": ["Subnautica.exe"]
+  },
+  {
+    "name": "Subnautica: Below Zero",
+    "processes": ["SubnauticaZero.exe"]
+  },
+  {
+    "name": "DayZ",
+    "processes": ["DayZ_x64.exe"]
+  },
+  {
+    "name": "SCUM",
+    "processes": ["SCUM.exe"]
+  },
+  {
+    "name": "Hunt: Showdown",
+    "processes": ["HuntGame.exe"]
+  },
+  {
+    "name": "Overwatch 2",
+    "processes": ["Overwatch.exe"]
+  },
+  {
+    "name": "Rainbow Six Siege",
+    "processes": ["RainbowSix.exe", "RainbowSix_Vulkan.exe"]
+  },
+  {
+    "name": "PUBG",
+    "processes": ["TslGame.exe"]
+  },
+  {
+    "name": "Warframe",
+    "processes": ["Warframe.x64.exe"]
+  },
+  {
+    "name": "Destiny 2",
+    "processes": ["destiny2.exe"]
+  },
+  {
+    "name": "Dota 2",
+    "processes": ["dota2.exe"]
+  },
+  {
+    "name": "Team Fortress 2",
+    "processes": ["tf.exe"]
+  },
+  {
+    "name": "Garry's Mod",
+    "processes": ["gmod.exe"]
+  },
+  {
+    "name": "Left 4 Dead 2",
+    "processes": ["left4dead2.exe"]
+  },
+  {
+    "name": "Battlefield 2042",
+    "processes": ["Battlefield™ 2042.exe"]
+  },
+  {
+    "name": "Battlefield V",
+    "processes": ["bfv.exe"]
+  },
+  {
+    "name": "Battlefield 1",
+    "processes": ["bf1.exe"]
+  },
+  {
+    "name": "Call of Duty",
+    "processes": ["cod.exe", "ModernWarfare.exe"]
+  },
+  {
+    "name": "Warzone",
+    "processes": ["cod.exe"]
+  },
+  {
+    "name": "Halo Infinite",
+    "processes": ["HaloInfinite.exe"]
+  },
+  {
+    "name": "The Finals",
+    "processes": ["Discovery.exe"]
+  },
+  {
+    "name": "Paladins",
+    "processes": ["Paladins.exe"]
+  },
+  {
+    "name": "Elden Ring",
+    "processes": ["eldenring.exe"]
+  },
+  {
+    "name": "Cyberpunk 2077",
+    "processes": ["Cyberpunk2077.exe"]
+  },
+  {
+    "name": "Hogwarts Legacy",
+    "processes": ["HogwartsLegacy.exe"]
+  },
+  {
+    "name": "Baldur's Gate 3",
+    "processes": ["bg3.exe"]
+  },
+  {
+    "name": "The Witcher 3",
+    "processes": ["witcher3.exe"]
+  },
+  {
+    "name": "Starfield",
+    "processes": ["Starfield.exe"]
+  },
+  {
+    "name": "Fallout 4",
+    "processes": ["Fallout4.exe"]
+  },
+  {
+    "name": "Fallout 76",
+    "processes": ["Fallout76.exe"]
+  },
+  {
+    "name": "Skyrim",
+    "processes": ["SkyrimSE.exe", "Skyrim.exe"]
+  },
+  {
+    "name": "Monster Hunter: World",
+    "processes": ["MonsterHunterWorld.exe"]
+  },
+  {
+    "name": "Monster Hunter Wilds",
+    "processes": ["MonsterHunterWilds.exe"]
+  },
+  {
+    "name": "Dark Souls III",
+    "processes": ["DarkSoulsIII.exe"]
+  },
+  {
+    "name": "Sekiro",
+    "processes": ["sekiro.exe"]
+  },
+  {
+    "name": "Resident Evil 4",
+    "processes": ["re4.exe"]
+  },
+  {
+    "name": "Resident Evil Village",
+    "processes": ["re8.exe"]
+  },
+  {
+    "name": "Devil May Cry 5",
+    "processes": ["DevilMayCry5.exe"]
+  },
+  {
+    "name": "Forza Horizon 5",
+    "processes": ["ForzaHorizon5.exe"]
+  },
+  {
+    "name": "Forza Motorsport",
+    "processes": ["forza Motorsport.exe"]
+  },
+  {
+    "name": "BeamNG.drive",
+    "processes": ["BeamNG.drive.exe"]
+  },
+  {
+    "name": "Assetto Corsa",
+    "processes": ["acs.exe"]
+  },
+  {
+    "name": "Assetto Corsa Competizione",
+    "processes": ["AC2-Win64-Shipping.exe"]
+  },
+  {
+    "name": "Euro Truck Simulator 2",
+    "processes": ["eurotrucks2.exe"]
+  },
+  {
+    "name": "American Truck Simulator",
+    "processes": ["amtrucks.exe"]
+  },
+  {
+    "name": "Farming Simulator 25",
+    "processes": ["FarmingSimulator2025.exe"]
+  },
+  {
+    "name": "Farming Simulator 22",
+    "processes": ["FarmingSimulator2022Game.exe"]
+  },
+  {
+    "name": "Need for Speed Heat",
+    "processes": ["NFSHeat.exe"]
+  },
+  {
+    "name": "Need for Speed Unbound",
+    "processes": ["NeedForSpeedUnbound.exe"]
+  },
+  {
+    "name": "The Crew Motorfest",
+    "processes": ["TheCrewMotorfest.exe"]
+  },
+  {
+    "name": "Trackmania",
+    "processes": ["Trackmania.exe"]
+  },
+  {
+    "name": "Wreckfest",
+    "processes": ["Wreckfest.exe"]
+  },
+  {
+    "name": "SnowRunner",
+    "processes": ["SnowRunner.exe"]
+  },
+  {
+    "name": "CarX Drift Racing Online",
+    "processes": ["CarX.exe"]
+  },
+  {
+    "name": "The Sims 4",
+    "processes": ["TS4_x64.exe"]
+  },
+  {
+    "name": "Cities: Skylines",
+    "processes": ["Cities.exe"]
+  },
+  {
+    "name": "Cities: Skylines II",
+    "processes": ["Cities2.exe"]
+  },
+  {
+    "name": "Kerbal Space Program",
+    "processes": ["KSP_x64.exe", "KSP.exe"]
+  },
+  {
+    "name": "Space Engineers",
+    "processes": ["SpaceEngineers.exe"]
+  },
+  {
+    "name": "Planet Zoo",
+    "processes": ["PlanetZoo.exe"]
+  },
+  {
+    "name": "Planet Coaster 2",
+    "processes": ["PlanetCoaster2.exe"]
+  },
+  {
+    "name": "House Flipper",
+    "processes": ["HouseFlipper.exe"]
+  },
+  {
+    "name": "House Flipper 2",
+    "processes": ["HouseFlipper2.exe"]
+  },
+  {
+    "name": "PowerWash Simulator",
+    "processes": ["PowerWashSimulator.exe"]
+  },
+  {
+    "name": "Stardew Valley",
+    "processes": ["Stardew Valley.exe"]
+  },
+  {
+    "name": "Hades",
+    "processes": ["Hades.exe"]
+  },
+  {
+    "name": "Hades II",
+    "processes": ["Hades2.exe"]
+  },
+  {
+    "name": "Hollow Knight",
+    "processes": ["hollow_knight.exe"]
+  },
+  {
+    "name": "Hollow Knight: Silksong",
+    "processes": ["hollow_knight_silksong.exe"]
+  },
+  {
+    "name": "Dead Cells",
+    "processes": ["deadcells.exe"]
+  },
+  {
+    "name": "Cuphead",
+    "processes": ["Cuphead.exe"]
+  },
+  {
+    "name": "Undertale",
+    "processes": ["UNDERTALE.exe"]
+  },
+  {
+    "name": "Celeste",
+    "processes": ["Celeste.exe"]
+  },
+  {
+    "name": "Ori and the Blind Forest",
+    "processes": ["ori.exe"]
+  },
+  {
+    "name": "No Man's Sky",
+    "processes": ["NMS.exe"]
+  },
+  {
+    "name": "Star Citizen",
+    "processes": ["StarCitizen.exe"]
+  },
+  {
+    "name": "Elite Dangerous",
+    "processes": ["EliteDangerous64.exe"]
+  },
+  {
+    "name": "Microsoft Flight Simulator",
+    "processes": ["FlightSimulator.exe"]
+  },
+  {
+    "name": "War Thunder",
+    "processes": ["aces.exe"]
+  },
+  {
+    "name": "World of Tanks",
+    "processes": ["WorldOfTanks.exe"]
+  },
+  {
+    "name": "World of Warships",
+    "processes": ["WorldOfWarships.exe"]
+  },
+  {
+    "name": "Civilization VI",
+    "processes": ["CivilizationVI.exe"]
+  },
+  {
+    "name": "Age of Empires IV",
+    "processes": ["RelicCardinal.exe"]
+  },
+  {
+    "name": "Europa Universalis IV",
+    "processes": ["eu4.exe"]
+  },
+  {
+    "name": "Hearts of Iron IV",
+    "processes": ["hoi4.exe"]
+  },
+  {
+    "name": "Crusader Kings III",
+    "processes": ["ck3.exe"]
+  },
+  {
+    "name": "Total War: Warhammer III",
+    "processes": ["Warhammer3.exe"]
+  },
+  {
+    "name": "RimWorld",
+    "processes": ["RimWorldWin64.exe"]
+  },
+  {
+    "name": "Factorio",
+    "processes": ["factorio.exe"]
+  },
+  {
+    "name": "Satisfactory",
+    "processes": ["FactoryGame.exe"]
+  },
+  {
+    "name": "Dyson Sphere Program",
+    "processes": ["DSPGAME.exe"]
+  },
+  {
+    "name": "Content Warning",
+    "processes": ["Content Warning.exe"]
+  },
+  {
+    "name": "Devour",
+    "processes": ["DEVOUR.exe"]
+  },
+  {
+    "name": "Dead by Daylight",
+    "processes": ["DeadByDaylight-Win64-Shipping.exe"]
+  },
+  {
+    "name": "Dying Light",
+    "processes": ["DyingLightGame.exe"]
+  },
+  {
+    "name": "Dying Light 2",
+    "processes": ["DyingLightGame_x64_rwdi.exe"]
+  },
+  {
+    "name": "Killing Floor 2",
+    "processes": ["KFGame.exe"]
+  },
+  {
+    "name": "VRChat",
+    "processes": ["VRChat.exe"]
+  },
+  {
+    "name": "Rec Room",
+    "processes": ["RecRoom.exe"]
+  },
+  {
+    "name": "Pavlov VR",
+    "processes": ["Pavlov-Win64-Shipping.exe"]
+  },
+  {
+    "name": "Beat Saber",
+    "processes": ["Beat Saber.exe"]
+  },
+  {
+    "name": "Path of Exile",
+    "processes": ["PathOfExile.exe", "PathOfExile_x64Steam.exe"]
+  },
+  {
+    "name": "Path of Exile 2",
+    "processes": ["PathOfExileSteam.exe"]
+  },
+  {
+    "name": "Diablo IV",
+    "processes": ["Diablo IV.exe"]
+  },
+  {
+    "name": "World of Warcraft",
+    "processes": ["Wow.exe", "WowClassic.exe"]
+  },
+  {
+    "name": "Guild Wars 2",
+    "processes": ["Gw2-64.exe", "Gw2.exe"]
+  },
+  {
+    "name": "Final Fantasy XIV",
+    "processes": ["ffxiv_dx11.exe", "ffxiv_dx12.exe"]
+  },
+  {
+    "name": "Lost Ark",
+    "processes": ["LOSTARK.exe"]
+  },
+  {
+    "name": "New World",
+    "processes": ["NewWorld.exe"]
+  },
+  {
+    "name": "Teamfight Tactics",
+    "processes": ["League of Legends.exe"]
+  },
+  {
+    "name": "Hearthstone",
+    "processes": ["Hearthstone.exe"]
+  },
+  {
+    "name": "Legends of Runeterra",
+    "processes": ["LoR.exe"]
+  },
+  {
+    "name": "Portal 2",
+    "processes": ["portal2.exe"]
+  },
+  {
+    "name": "Half-Life 2",
+    "processes": ["hl2.exe"]
+  },
+  {
+    "name": "Deep Rock Galactic",
+    "processes": ["FSD-Win64-Shipping.exe"]
+  },
+  {
+    "name": "Risk of Rain 2",
+    "processes": ["Risk of Rain 2.exe"]
+  },
+  {
+    "name": "Payday 2",
+    "processes": ["payday2_win32_release.exe"]
+  },
+  {
+    "name": "Payday 3",
+    "processes": ["PAYDAY3Client-Win64-Shipping.exe"]
+  },
+  {
+    "name": "Goat Simulator 3",
+    "processes": ["GoatSimulator3.exe"]
+  },
+  {
+    "name": "Human Fall Flat",
+    "processes": ["Human.exe"]
+  },
+  {
+    "name": "Gang Beasts",
+    "processes": ["Gang Beasts.exe"]
+  },
+  {
+    "name": "Party Animals",
+    "processes": ["PartyAnimals.exe"]
+  },
+  {
+    "name": "Golf With Your Friends",
+    "processes": ["GolfWithYourFriends.exe"]
+  },
+  {
+    "name": "The Elder Scrolls Online",
+    "processes": ["eso64.exe", "eso.exe"]
+  },
+  {
+    "name": "Black Desert Online",
+    "processes": ["BlackDesert64.exe", "BlackDesertLauncher.exe"]
+  },
+  {
+    "name": "Albion Online",
+    "processes": ["Albion-Online.exe"]
+  }
+]

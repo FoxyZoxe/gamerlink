@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../lib/api.js";
 import Avatar from "../components/Avatar.jsx";
 import { statusMeta } from "../lib/status.js";
+import CurrentGame from "../components/CurrentGame.jsx";
 
 export default function Home() {
   const { user } = useAuth();
@@ -107,6 +108,8 @@ export default function Home() {
       {/* ============================================================
           HERO
           ============================================================ */}
+
+<CurrentGame />
 
       <section className="home-hero glass-card">
 
