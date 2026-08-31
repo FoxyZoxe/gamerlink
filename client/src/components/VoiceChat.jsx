@@ -1,108 +1,271 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "https://gamerlink.onrender.com";
+const SOCKET_URL =
+  "https://gamerlink.onrender.com";
 
-export default function VoiceChat({ squadId, user }) {
+const DEFAULT_AUDIO_SETTINGS = {
+  microphoneId: "",
+  outputDeviceId: "",
+  micVolume: 100,
+  outputVolume: 100,
+  voiceDetection: true,
+  sensitivity: 35,
+  noiseSuppression: true,
+  echoCancellation: true,
+  autoGainControl: true,
+};
+
+function getAudioSettings() {
+  try {
+    const saved =
+      localStorage.getItem(
+        "gamerlink-audio-settings"
+      );
+
+    if (!saved) {
+      return DEFAULT_AUDIO_SETTINGS;
+    }
+
+    return {
+      ...DEFAULT_AUDIO_SETTINGS,
+      ...JSON.parse(saved),
+    };
+  } catch {
+    return DEFAULT_AUDIO_SETTINGS;
+  }
+}
+
+export default function VoiceChat({
+  squadId,
+  user,
+}) {
   // ==========================================================
   // REFS
   // ==========================================================
 
-  const socketRef = useRef(null);
-  const localStreamRef = useRef(null);
+  const socketRef =
+    useRef(null);
 
-  const peersRef = useRef(new Map());
-  const audioRefs = useRef(new Map());
+  const localStreamRef =
+    useRef(null);
 
-  // Détection de voix
-  const audioContextRef = useRef(null);
-  const analyserRef = useRef(null);
-  const voiceAnimationRef = useRef(null);
+  const peersRef =
+    useRef(new Map());
 
-  const speakingRef = useRef(false);
-  const mutedRef = useRef(false);
+  const audioRefs =
+    useRef(new Map());
 
-  // Évite les problèmes de synchronisation React
-  const voiceUsersRef = useRef([]);
+  const audioGainRefs =
+    useRef(new Map());
+
+  const audioContextRef =
+    useRef(null);
+
+  const analyserRef =
+    useRef(null);
+
+  const voiceAnimationRef =
+    useRef(null);
+
+  const speakingRef =
+    useRef(false);
+
+  const mutedRef =
+    useRef(false);
+
+  const audioSettingsRef =
+    useRef(getAudioSettings());
 
   // ==========================================================
   // ÉTATS
   // ==========================================================
 
-  const [speakingUsers, setSpeakingUsers] = useState(new Set());
-  const [connected, setConnected] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [deafened, setDeafened] = useState(false);
-  const [voiceUsers, setVoiceUsers] = useState([]);
-  const [speaking, setSpeaking] = useState(false);
-  const [error, setError] = useState("");
+  const [
+    speakingUsers,
+    setSpeakingUsers,
+  ] = useState(new Set());
+
+  const [
+    connected,
+    setConnected,
+  ] = useState(false);
+
+  const [
+    muted,
+    setMuted,
+  ] = useState(false);
+
+  const [
+    deafened,
+    setDeafened,
+  ] = useState(false);
+
+  const [
+    voiceUsers,
+    setVoiceUsers,
+  ] = useState([]);
+
+  const [
+    speaking,
+    setSpeaking,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const [
+    audioSettings,
+    setAudioSettings,
+  ] = useState(
+    getAudioSettings()
+  );
 
   // ==========================================================
-  // UTILITAIRE — METTRE À JOUR LES UTILISATEURS
+  // RÉGLAGES AUDIO
   // ==========================================================
 
-  function updateVoiceUsers(updater) {
-    setVoiceUsers((previous) => {
-      const next =
-        typeof updater === "function"
-          ? updater(previous)
-          : updater;
+  useEffect(() => {
+    audioSettingsRef.current =
+      audioSettings;
+  }, [audioSettings]);
 
-      voiceUsersRef.current = next;
+  useEffect(() => {
+    function handleSettingsChange(
+      event
+    ) {
+      const settings = {
+        ...DEFAULT_AUDIO_SETTINGS,
+        ...(event.detail || {}),
+      };
 
-      return next;
-    });
-  }
+      audioSettingsRef.current =
+        settings;
+
+      setAudioSettings(settings);
+
+      applyOutputSettings(
+        settings
+      );
+
+      if (
+        localStreamRef.current
+      ) {
+        const track =
+          localStreamRef.current.getAudioTracks()[0];
+
+        if (track) {
+          try {
+            track.applyConstraints({
+              echoCancellation:
+                settings.echoCancellation,
+              noiseSuppression:
+                settings.noiseSuppression,
+              autoGainControl:
+                settings.autoGainControl,
+            });
+          } catch {}
+        }
+      }
+
+      applyVoiceDetectionSettings();
+    }
+
+    window.addEventListener(
+      "gamerlink-audio-settings-changed",
+      handleSettingsChange
+    );
+
+    return () => {
+      window.removeEventListener(
+        "gamerlink-audio-settings-changed",
+        handleSettingsChange
+      );
+    };
+  }, []);
 
   // ==========================================================
-  // ARRÊTER LA DÉTECTION DE VOIX
+  // DÉTECTION DE VOIX
   // ==========================================================
 
   function stopVoiceDetection() {
-    if (voiceAnimationRef.current) {
+    if (
+      voiceAnimationRef.current
+    ) {
       cancelAnimationFrame(
         voiceAnimationRef.current
       );
 
-      voiceAnimationRef.current = null;
+      voiceAnimationRef.current =
+        null;
     }
 
-    if (analyserRef.current) {
-      try {
-        analyserRef.current.disconnect();
-      } catch {}
-
-      analyserRef.current = null;
-    }
-
-    if (audioContextRef.current) {
+    if (
+      audioContextRef.current
+    ) {
       try {
         audioContextRef.current.close();
       } catch {}
 
-      audioContextRef.current = null;
+      audioContextRef.current =
+        null;
     }
 
-    speakingRef.current = false;
+    analyserRef.current =
+      null;
 
-    setSpeaking(false);
+    if (
+      speakingRef.current
+    ) {
+      speakingRef.current =
+        false;
 
-    console.log(
-      "🔇 Détection de voix arrêtée"
-    );
+      setSpeaking(false);
+
+      if (
+        socketRef.current
+      ) {
+        socketRef.current.emit(
+          "voice:speaking",
+          {
+            squadId,
+            speaking: false,
+          }
+        );
+      }
+    }
   }
 
-  // ==========================================================
-  // DÉMARRER LA DÉTECTION DE VOIX
-  // ==========================================================
-
-  function startVoiceDetection(stream, socket) {
+  function startVoiceDetection(
+    stream,
+    socket
+  ) {
     try {
-      if (!stream || !socket) {
-        return null;
+      stopVoiceDetection();
+
+      const settings =
+        audioSettingsRef.current;
+
+      if (
+        !settings.voiceDetection
+      ) {
+        console.log(
+          "🔇 Détection de voix désactivée"
+        );
+
+        return;
       }
 
-      stopVoiceDetection();
+      if (!stream || !socket) {
+        return;
+      }
 
       const AudioContextClass =
         window.AudioContext ||
@@ -110,10 +273,10 @@ export default function VoiceChat({ squadId, user }) {
 
       if (!AudioContextClass) {
         console.warn(
-          "⚠️ AudioContext non disponible."
+          "⚠️ AudioContext indisponible"
         );
 
-        return null;
+        return;
       }
 
       const audioContext =
@@ -123,7 +286,8 @@ export default function VoiceChat({ squadId, user }) {
         audioContext.createAnalyser();
 
       analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.85;
+      analyser.smoothingTimeConstant =
+        0.7;
 
       const source =
         audioContext.createMediaStreamSource(
@@ -138,31 +302,33 @@ export default function VoiceChat({ squadId, user }) {
       analyserRef.current =
         analyser;
 
-      if (
-        audioContext.state ===
-        "suspended"
-      ) {
-        audioContext
-          .resume()
-          .catch(() => {});
-      }
-
       const data =
         new Uint8Array(
           analyser.fftSize
         );
 
-      let lastVoiceTime = 0;
-
-      const START_THRESHOLD = 0.035;
-      const STOP_THRESHOLD = 0.020;
-      const SILENCE_DELAY = 350;
+      let lastVoiceTime =
+        performance.now();
 
       const detect = () => {
         if (
           !analyserRef.current ||
           !localStreamRef.current
         ) {
+          return;
+        }
+
+        const currentSettings =
+          audioSettingsRef.current;
+
+        if (
+          !currentSettings.voiceDetection
+        ) {
+          voiceAnimationRef.current =
+            requestAnimationFrame(
+              detect
+            );
+
           return;
         }
 
@@ -178,9 +344,11 @@ export default function VoiceChat({ squadId, user }) {
           i++
         ) {
           const value =
-            (data[i] - 128) / 128;
+            (data[i] - 128) /
+            128;
 
-          sum += value * value;
+          sum +=
+            value * value;
         }
 
         const volume =
@@ -188,15 +356,45 @@ export default function VoiceChat({ squadId, user }) {
             sum / data.length
           );
 
+        /*
+         * Sensibilité :
+         *
+         * 5  = très sensible
+         * 35 = valeur normale
+         * 100 = peu sensible
+         */
+
+        const sensitivity =
+          Math.max(
+            5,
+            Math.min(
+              100,
+              Number(
+                currentSettings.sensitivity
+              ) || 35
+            )
+          );
+
+        const threshold =
+          0.008 +
+          (sensitivity / 100) *
+            0.055;
+
+        const startThreshold =
+          threshold;
+
+        const stopThreshold =
+          threshold * 0.65;
+
         const now =
           performance.now();
 
-        // ======================================================
-        // MICRO COUPÉ
-        // ======================================================
-
-        if (mutedRef.current) {
-          if (speakingRef.current) {
+        if (
+          mutedRef.current
+        ) {
+          if (
+            speakingRef.current
+          ) {
             speakingRef.current =
               false;
 
@@ -209,27 +407,10 @@ export default function VoiceChat({ squadId, user }) {
                 speaking: false,
               }
             );
-
-            console.log(
-              "🔇 Parole arrêtée car micro coupé"
-            );
           }
-
-          voiceAnimationRef.current =
-            requestAnimationFrame(
-              detect
-            );
-
-          return;
-        }
-
-        // ======================================================
-        // DÉBUT DE PAROLE
-        // ======================================================
-
-        if (
+        } else if (
           volume >=
-          START_THRESHOLD
+          startThreshold
         ) {
           lastVoiceTime = now;
 
@@ -241,10 +422,6 @@ export default function VoiceChat({ squadId, user }) {
 
             setSpeaking(true);
 
-            console.log(
-              "🎙️ TU PARLES → envoi serveur"
-            );
-
             socket.emit(
               "voice:speaking",
               {
@@ -252,28 +429,23 @@ export default function VoiceChat({ squadId, user }) {
                 speaking: true,
               }
             );
+
+            console.log(
+              "🎙️ TU PARLES → envoi serveur"
+            );
           }
-        }
-
-        // ======================================================
-        // FIN DE PAROLE
-        // ======================================================
-
-        else if (
+        } else if (
           speakingRef.current &&
           volume <
-            STOP_THRESHOLD &&
-          now - lastVoiceTime >
-            SILENCE_DELAY
+            stopThreshold &&
+          now -
+            lastVoiceTime >
+            350
         ) {
           speakingRef.current =
             false;
 
           setSpeaking(false);
-
-          console.log(
-            "🔇 TU NE PARLES PLUS → envoi serveur"
-          );
 
           socket.emit(
             "voice:speaking",
@@ -281,6 +453,10 @@ export default function VoiceChat({ squadId, user }) {
               squadId,
               speaking: false,
             }
+          );
+
+          console.log(
+            "🔇 TU NE PARLES PLUS → envoi serveur"
           );
         }
 
@@ -295,59 +471,70 @@ export default function VoiceChat({ squadId, user }) {
       console.log(
         "🎙️ Détection de voix activée"
       );
-
-      return () => {
-        if (
-          voiceAnimationRef.current
-        ) {
-          cancelAnimationFrame(
-            voiceAnimationRef.current
-          );
-
-          voiceAnimationRef.current =
-            null;
-        }
-
-        try {
-          source.disconnect();
-        } catch {}
-
-        try {
-          analyser.disconnect();
-        } catch {}
-
-        try {
-          audioContext.close();
-        } catch {}
-
-        if (
-          audioContextRef.current ===
-          audioContext
-        ) {
-          audioContextRef.current =
-            null;
-        }
-
-        if (
-          analyserRef.current ===
-          analyser
-        ) {
-          analyserRef.current =
-            null;
-        }
-
-        speakingRef.current =
-          false;
-
-        setSpeaking(false);
-      };
     } catch (error) {
       console.error(
         "❌ Erreur détection voix :",
         error
       );
+    }
+  }
 
-      return null;
+  function applyVoiceDetectionSettings() {
+    if (
+      !localStreamRef.current ||
+      !socketRef.current
+    ) {
+      return;
+    }
+
+    startVoiceDetection(
+      localStreamRef.current,
+      socketRef.current
+    );
+  }
+
+  // ==========================================================
+  // AUDIO DISTANT
+  // ==========================================================
+
+  async function applyOutputSettings(
+    settings = audioSettingsRef.current
+  ) {
+    for (
+      const audio of audioRefs.current.values()
+    ) {
+      audio.volume = Math.max(
+        0,
+        Math.min(
+          1,
+          Number(
+            settings.outputVolume
+          ) / 100
+        )
+      );
+
+      audio.muted =
+        deafened ||
+        Number(
+          settings.outputVolume
+        ) <= 0;
+
+      if (
+        settings.outputDeviceId &&
+        typeof audio.setSinkId ===
+          "function"
+      ) {
+        try {
+          await audio.setSinkId(
+            settings.outputDeviceId
+          );
+        } catch (error) {
+          console.warn(
+            "⚠️ Impossible de sélectionner la sortie audio :",
+            error
+          );
+        }
+      }
     }
   }
 
@@ -355,7 +542,9 @@ export default function VoiceChat({ squadId, user }) {
   // NETTOYAGE PEER
   // ==========================================================
 
-  function cleanupPeer(socketId) {
+  function cleanupPeer(
+    socketId
+  ) {
     const peer =
       peersRef.current.get(
         socketId
@@ -381,10 +570,27 @@ export default function VoiceChat({ squadId, user }) {
         audio.pause();
       } catch {}
 
-      audio.srcObject = null;
+      audio.srcObject =
+        null;
+
       audio.remove();
 
       audioRefs.current.delete(
+        socketId
+      );
+    }
+
+    const gain =
+      audioGainRefs.current.get(
+        socketId
+      );
+
+    if (gain) {
+      try {
+        gain.context.close();
+      } catch {}
+
+      audioGainRefs.current.delete(
         socketId
       );
     }
@@ -394,15 +600,17 @@ export default function VoiceChat({ squadId, user }) {
         const next =
           new Set(previous);
 
-        next.delete(socketId);
+        next.delete(
+          socketId
+        );
 
         return next;
       }
     );
 
-    updateVoiceUsers(
-      (previous) =>
-        previous.filter(
+    setVoiceUsers(
+      (users) =>
+        users.filter(
           (item) =>
             item.socketId !==
             socketId
@@ -411,7 +619,7 @@ export default function VoiceChat({ squadId, user }) {
   }
 
   // ==========================================================
-  // NETTOYAGE COMPLET
+  // NETTOYAGE VOCAL
   // ==========================================================
 
   function cleanupVoice() {
@@ -424,6 +632,13 @@ export default function VoiceChat({ squadId, user }) {
           {
             squadId,
             speaking: false,
+          }
+        );
+
+        socketRef.current.emit(
+          "voice:leave",
+          {
+            squadId,
           }
         );
       } catch {}
@@ -447,23 +662,37 @@ export default function VoiceChat({ squadId, user }) {
           audio.pause();
         } catch {}
 
-        audio.srcObject = null;
+        audio.srcObject =
+          null;
+
         audio.remove();
       }
     );
 
     audioRefs.current.clear();
 
+    audioGainRefs.current.forEach(
+      (gain) => {
+        try {
+          gain.context.close();
+        } catch {}
+      }
+    );
+
+    audioGainRefs.current.clear();
+
     if (
       localStreamRef.current
     ) {
       localStreamRef.current
         .getTracks()
-        .forEach((track) => {
-          try {
-            track.stop();
-          } catch {}
-        });
+        .forEach(
+          (track) => {
+            try {
+              track.stop();
+            } catch {}
+          }
+        );
 
       localStreamRef.current =
         null;
@@ -480,8 +709,6 @@ export default function VoiceChat({ squadId, user }) {
         null;
     }
 
-    voiceUsersRef.current = [];
-
     setVoiceUsers([]);
 
     setSpeakingUsers(
@@ -489,6 +716,7 @@ export default function VoiceChat({ squadId, user }) {
     );
 
     setConnected(false);
+
     setSpeaking(false);
 
     speakingRef.current =
@@ -551,19 +779,23 @@ export default function VoiceChat({ squadId, user }) {
     ) {
       localStreamRef.current
         .getTracks()
-        .forEach((track) => {
-          peer.addTrack(
-            track,
-            localStreamRef.current
-          );
-        });
+        .forEach(
+          (track) => {
+            peer.addTrack(
+              track,
+              localStreamRef.current
+            );
+          }
+        );
     }
 
     // ========================================================
     // AUDIO DISTANT
     // ========================================================
 
-    peer.ontrack = (event) => {
+    peer.ontrack = (
+      event
+    ) => {
       const stream =
         event.streams?.[0];
 
@@ -582,9 +814,15 @@ export default function VoiceChat({ squadId, user }) {
             "audio"
           );
 
-        audio.autoplay = true;
-        audio.playsInline = true;
-        audio.controls = false;
+        audio.autoplay =
+          true;
+
+        audio.playsInline =
+          true;
+
+        audio.controls =
+          false;
+
         audio.style.display =
           "none";
 
@@ -601,8 +839,37 @@ export default function VoiceChat({ squadId, user }) {
       audio.srcObject =
         stream;
 
+      const settings =
+        audioSettingsRef.current;
+
+      audio.volume =
+        Math.max(
+          0,
+          Math.min(
+            1,
+            Number(
+              settings.outputVolume
+            ) / 100
+          )
+        );
+
       audio.muted =
-        deafened;
+        deafened ||
+        Number(
+          settings.outputVolume
+        ) <= 0;
+
+      if (
+        settings.outputDeviceId &&
+        typeof audio.setSinkId ===
+          "function"
+      ) {
+        audio
+          .setSinkId(
+            settings.outputDeviceId
+          )
+          .catch(() => {});
+      }
 
       audio
         .play()
@@ -739,24 +1006,64 @@ export default function VoiceChat({ squadId, user }) {
         cleanupVoice();
       }
 
+      const settings =
+        audioSettingsRef.current;
+
       console.log(
         "🎤 Demande microphone..."
       );
 
+      const audioConstraints = {
+        echoCancellation:
+          settings.echoCancellation,
+
+        noiseSuppression:
+          settings.noiseSuppression,
+
+        autoGainControl:
+          settings.autoGainControl,
+      };
+
+      if (
+        settings.microphoneId
+      ) {
+        audioConstraints.deviceId = {
+          exact:
+            settings.microphoneId,
+        };
+      }
+
       const stream =
         await navigator.mediaDevices.getUserMedia(
           {
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
+            audio:
+              audioConstraints,
             video: false,
           }
         );
 
       localStreamRef.current =
         stream;
+
+      const track =
+        stream.getAudioTracks()[0];
+
+      if (track) {
+        try {
+          await track.applyConstraints(
+            {
+              echoCancellation:
+                settings.echoCancellation,
+
+              noiseSuppression:
+                settings.noiseSuppression,
+
+              autoGainControl:
+                settings.autoGainControl,
+            }
+          );
+        } catch {}
+      }
 
       console.log(
         "🎤 Microphone activé"
@@ -817,10 +1124,12 @@ export default function VoiceChat({ squadId, user }) {
               squadId,
               user: {
                 id: user.id,
+
                 username:
                   user.username ||
                   user.name ||
                   "Joueur",
+
                 avatar:
                   user.avatar ||
                   user.avatar_url ||
@@ -832,7 +1141,7 @@ export default function VoiceChat({ squadId, user }) {
       );
 
       // ======================================================
-      // UTILISATEURS DÉJÀ PRÉSENTS
+      // UTILISATEURS PRÉSENTS
       // ======================================================
 
       socket.on(
@@ -859,9 +1168,6 @@ export default function VoiceChat({ squadId, user }) {
                   ),
               })
             );
-
-          voiceUsersRef.current =
-            normalizedUsers;
 
           setVoiceUsers(
             normalizedUsers
@@ -904,7 +1210,8 @@ export default function VoiceChat({ squadId, user }) {
         "voice:user-joined",
         ({
           socketId,
-          user: joinedUser,
+          user:
+            joinedUser,
           speaking:
             joinedSpeaking,
         }) => {
@@ -918,7 +1225,7 @@ export default function VoiceChat({ squadId, user }) {
             joinedUser
           );
 
-          updateVoiceUsers(
+          setVoiceUsers(
             (previous) => {
               const existing =
                 previous.find(
@@ -928,22 +1235,7 @@ export default function VoiceChat({ squadId, user }) {
                 );
 
               if (existing) {
-                return previous.map(
-                  (item) =>
-                    item.socketId ===
-                    socketId
-                      ? {
-                          ...item,
-                          user:
-                            joinedUser ||
-                            item.user,
-                          speaking:
-                            Boolean(
-                              joinedSpeaking
-                            ),
-                        }
-                      : item
-                );
+                return previous;
               }
 
               return [
@@ -961,31 +1253,46 @@ export default function VoiceChat({ squadId, user }) {
             }
           );
 
-          setSpeakingUsers(
-            (previous) => {
-              const next =
-                new Set(previous);
+          if (
+            joinedSpeaking
+          ) {
+            setSpeakingUsers(
+              (previous) => {
+                const next =
+                  new Set(
+                    previous
+                  );
 
-              if (
-                joinedSpeaking
-              ) {
                 next.add(
                   socketId
                 );
-              } else {
-                next.delete(
-                  socketId
-                );
-              }
 
-              return next;
-            }
+                return next;
+              }
+            );
+          }
+
+          /*
+           * Le nouveau joueur n'est pas forcément
+           * celui qui doit créer l'offre.
+           *
+           * Le joueur déjà présent crée le peer.
+           */
+          createPeer(
+            socketId,
+            true
+          ).catch(
+            (error) =>
+              console.error(
+                "❌ Création peer nouveau joueur :",
+                error
+              )
           );
         }
       );
 
       // ======================================================
-      // ⭐ JOUEUR PARLE
+      // JOUEUR PARLE
       // ======================================================
 
       socket.on(
@@ -999,31 +1306,21 @@ export default function VoiceChat({ squadId, user }) {
             return;
           }
 
-          const speakingNow =
-            Boolean(
-              isSpeaking
-            );
-
           console.log(
-            "🎙️ ⭐ ÉTAT PAROLE REÇU :",
-            {
-              socketId,
-              speaking:
-                speakingNow,
-            }
+            "🎙️ État vocal reçu :",
+            socketId,
+            isSpeaking
           );
-
-          // ==================================================
-          // MISE À JOUR DU SET
-          // ==================================================
 
           setSpeakingUsers(
             (previous) => {
               const next =
-                new Set(previous);
+                new Set(
+                  previous
+                );
 
               if (
-                speakingNow
+                isSpeaking
               ) {
                 next.add(
                   socketId
@@ -1038,55 +1335,21 @@ export default function VoiceChat({ squadId, user }) {
             }
           );
 
-          // ==================================================
-          // MISE À JOUR DE L'UTILISATEUR
-          // ==================================================
-
-          updateVoiceUsers(
-            (previous) => {
-              const exists =
-                previous.some(
-                  (item) =>
-                    item.socketId ===
-                    socketId
-                );
-
-              // Si l'utilisateur
-              // existe déjà
-              if (exists) {
-                return previous.map(
-                  (item) =>
-                    item.socketId ===
-                    socketId
-                      ? {
-                          ...item,
-                          speaking:
-                            speakingNow,
-                        }
-                      : item
-                );
-              }
-
-              // Sécurité :
-              // l'événement peut arriver
-              // avant voice:user-joined
-              console.warn(
-                "⚠️ État vocal reçu avant l'arrivée du joueur."
-              );
-
-              return [
-                ...previous,
-                {
-                  socketId,
-                  user: {
-                    username:
-                      "Joueur",
-                  },
-                  speaking:
-                    speakingNow,
-                },
-              ];
-            }
+          setVoiceUsers(
+            (previous) =>
+              previous.map(
+                (item) =>
+                  item.socketId ===
+                  socketId
+                    ? {
+                        ...item,
+                        speaking:
+                          Boolean(
+                            isSpeaking
+                          ),
+                      }
+                    : item
+              )
           );
         }
       );
@@ -1146,7 +1409,7 @@ export default function VoiceChat({ squadId, user }) {
             );
           } catch (error) {
             console.error(
-              "❌ Erreur offer :",
+              "❌ Erreur traitement offer :",
               error
             );
           }
@@ -1185,14 +1448,9 @@ export default function VoiceChat({ squadId, user }) {
                 answer
               )
             );
-
-            console.log(
-              "📨 Answer reçue de",
-              from
-            );
           } catch (error) {
             console.error(
-              "❌ Erreur answer :",
+              "❌ Erreur traitement answer :",
               error
             );
           }
@@ -1233,7 +1491,7 @@ export default function VoiceChat({ squadId, user }) {
             );
           } catch (error) {
             console.error(
-              "❌ Erreur ICE :",
+              "❌ ICE candidate :",
               error
             );
           }
@@ -1249,18 +1507,16 @@ export default function VoiceChat({ squadId, user }) {
         ({
           socketId,
         }) => {
-          if (!socketId) {
-            return;
-          }
-
           console.log(
             "🚪 Joueur parti :",
             socketId
           );
 
-          cleanupPeer(
-            socketId
-          );
+          if (socketId) {
+            cleanupPeer(
+              socketId
+            );
+          }
         }
       );
 
@@ -1303,6 +1559,13 @@ export default function VoiceChat({ squadId, user }) {
         setError(
           "Aucun microphone détecté sur cet appareil."
         );
+      } else if (
+        error?.name ===
+        "OverconstrainedError"
+      ) {
+        setError(
+          "Le microphone sélectionné n'est plus disponible."
+        );
       } else {
         setError(
           "Impossible d'accéder au microphone."
@@ -1321,19 +1584,6 @@ export default function VoiceChat({ squadId, user }) {
     console.log(
       "🚪 Déconnexion du vocal..."
     );
-
-    if (
-      socketRef.current
-    ) {
-      try {
-        socketRef.current.emit(
-          "voice:leave",
-          {
-            squadId,
-          }
-        );
-      } catch {}
-    }
 
     cleanupVoice();
   }
@@ -1381,15 +1631,15 @@ export default function VoiceChat({ squadId, user }) {
     );
 
     if (shouldMute) {
+      speakingRef.current =
+        false;
+
+      setSpeaking(false);
+
       if (
-        speakingRef.current
+        socketRef.current
       ) {
-        speakingRef.current =
-          false;
-
-        setSpeaking(false);
-
-        socketRef.current?.emit(
+        socketRef.current.emit(
           "voice:speaking",
           {
             squadId,
@@ -1423,7 +1673,11 @@ export default function VoiceChat({ squadId, user }) {
     audioRefs.current.forEach(
       (audio) => {
         audio.muted =
-          newValue;
+          newValue ||
+          Number(
+            audioSettingsRef.current
+              .outputVolume
+          ) <= 0;
       }
     );
 
@@ -1433,6 +1687,23 @@ export default function VoiceChat({ squadId, user }) {
         : "🔊 Son activé"
     );
   }
+
+  // ==========================================================
+  // CHANGEMENT SENSIBILITÉ
+  // ==========================================================
+
+  useEffect(() => {
+    if (
+      connected &&
+      localStreamRef.current &&
+      socketRef.current
+    ) {
+      applyVoiceDetectionSettings();
+    }
+  }, [
+    audioSettings.voiceDetection,
+    audioSettings.sensitivity,
+  ]);
 
   // ==========================================================
   // NETTOYAGE
@@ -1460,7 +1731,9 @@ export default function VoiceChat({ squadId, user }) {
           "1px solid var(--border)",
       }}
     >
-      {/* HEADER */}
+      {/* ====================================================
+          HEADER
+      ==================================================== */}
 
       <div
         style={{
@@ -1507,7 +1780,9 @@ export default function VoiceChat({ squadId, user }) {
         )}
       </div>
 
-      {/* ERREUR */}
+      {/* ====================================================
+          ERREUR
+      ==================================================== */}
 
       {error && (
         <div
@@ -1520,7 +1795,9 @@ export default function VoiceChat({ squadId, user }) {
         </div>
       )}
 
-      {/* CONTENU */}
+      {/* ====================================================
+          CONTENU
+      ==================================================== */}
 
       {connected && (
         <>
@@ -1528,7 +1805,8 @@ export default function VoiceChat({ squadId, user }) {
 
           <div
             style={{
-              display: "flex",
+              display:
+                "flex",
               gap: 8,
               marginTop: 16,
             }}
@@ -1587,7 +1865,8 @@ export default function VoiceChat({ squadId, user }) {
 
             <div
               style={{
-                display: "flex",
+                display:
+                  "flex",
                 flexDirection:
                   "column",
                 gap: 8,
@@ -1597,7 +1876,8 @@ export default function VoiceChat({ squadId, user }) {
 
               <div
                 style={{
-                  display: "flex",
+                  display:
+                    "flex",
                   alignItems:
                     "center",
                   gap: 10,
@@ -1653,15 +1933,13 @@ export default function VoiceChat({ squadId, user }) {
                 </span>
               </div>
 
-              {/* AUTRES JOUEURS */}
+              {/* AUTRES */}
 
               {voiceUsers.map(
                 (item) => {
-                  // ⭐ ON UTILISE DIRECTEMENT
-                  // item.speaking
                   const isSpeaking =
-                    Boolean(
-                      item.speaking
+                    speakingUsers.has(
+                      item.socketId
                     );
 
                   return (
@@ -1711,8 +1989,6 @@ export default function VoiceChat({ squadId, user }) {
                             isSpeaking
                               ? "#55ff88"
                               : "inherit",
-                          transition:
-                            "color 0.15s ease",
                         }}
                       >
                         {item.user
@@ -1738,8 +2014,6 @@ export default function VoiceChat({ squadId, user }) {
                   );
                 }
               )}
-
-              {/* PERSONNE */}
 
               {voiceUsers.length ===
                 0 && (
