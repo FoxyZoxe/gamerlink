@@ -14,6 +14,7 @@ import { api } from "../lib/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import Avatar from "../components/Avatar.jsx";
+import VoiceChat from "../components/VoiceChat.jsx";
 
 
 export default function SquadDetails() {
@@ -910,6 +911,13 @@ export default function SquadDetails() {
           )}
 
         </section>
+
+        {isMember && (
+  <VoiceChat
+    squadId={id}
+    user={user}
+  />
+)}
 
 
         {/* ====================================================

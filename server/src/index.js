@@ -87,6 +87,10 @@ app.use("/api/squads", squadsRouter);
 
 io.on("connection", (socket) => {
   console.log(
+    "🔥🔥🔥 SERVEUR GAMERLINK - VERSION VOCALE ACTIVE 🔥🔥🔥"
+  );
+
+  console.log(
     `🔌 Joueur connecté : ${socket.id}`
   );
 
@@ -103,22 +107,21 @@ io.on("connection", (socket) => {
 
       const room = `voice:${squadId}`;
 
+      // Mémoriser les informations du joueur
+      socket.data.voiceUser = user;
+      socket.data.voiceSquad = squadId;
+      socket.data.voiceSpeaking = false;
+
       socket.join(room);
 
       console.log(
         `🎙️ ${user.username} rejoint ${room}`
       );
 
-      // Informer les autres joueurs
-      socket.to(room).emit(
-        "voice:user-joined",
-        {
-          socketId: socket.id,
-          user,
-        }
-      );
+      // ======================================================
+      // RÉCUPÉRER LES JOUEURS DÉJÀ PRÉSENTS
+      // ======================================================
 
-      // Récupérer les sockets présents
       const roomSockets =
         io.sockets.adapter.rooms.get(room);
 
@@ -140,17 +143,89 @@ io.on("connection", (socket) => {
               socketId,
               user:
                 connectedSocket.data.voiceUser,
+              speaking:
+                Boolean(
+                  connectedSocket.data.voiceSpeaking
+                ),
             });
           }
         }
       }
 
-      socket.data.voiceUser = user;
-      socket.data.voiceSquad = squadId;
+      // ======================================================
+      // INFORMER LES AUTRES
+      // ======================================================
+
+      socket.to(room).emit(
+        "voice:user-joined",
+        {
+          socketId: socket.id,
+          user,
+          speaking: false,
+        }
+      );
+
+      // ======================================================
+      // ENVOYER LA LISTE AU NOUVEAU JOUEUR
+      // ======================================================
 
       socket.emit(
         "voice:users",
         users
+      );
+    }
+  );
+
+  // ==========================================================
+  // DÉTECTION DE PAROLE
+  // ==========================================================
+
+  socket.on(
+    "voice:speaking",
+    ({ squadId, speaking }) => {
+      if (!squadId) {
+        return;
+      }
+
+      console.log(
+  `🔥 SERVEUR REÇOIT voice:speaking : ${socket.id} | ${speaking}`
+);
+
+      const currentSquad =
+        socket.data.voiceSquad;
+
+      // Le joueur doit être dans ce salon
+      if (
+        String(currentSquad) !==
+        String(squadId)
+      ) {
+        return;
+      }
+
+      const room = `voice:${squadId}`;
+
+      const isSpeaking =
+        Boolean(speaking);
+
+      // Mémoriser l'état
+      socket.data.voiceSpeaking =
+        isSpeaking;
+
+      console.log(
+        `🎙️ ${socket.data.voiceUser?.username || socket.id} : ${
+          isSpeaking
+            ? "PARLE"
+            : "silence"
+        }`
+      );
+
+      // Envoyer aux autres joueurs
+      socket.to(room).emit(
+        "voice:user-speaking",
+        {
+          socketId: socket.id,
+          speaking: isSpeaking,
+        }
       );
     }
   );
@@ -168,6 +243,18 @@ io.on("connection", (socket) => {
 
       const room = `voice:${squadId}`;
 
+      socket.data.voiceSpeaking =
+        false;
+
+      // Informer les autres
+      socket.to(room).emit(
+        "voice:user-speaking",
+        {
+          socketId: socket.id,
+          speaking: false,
+        }
+      );
+
       socket.leave(room);
 
       console.log(
@@ -183,11 +270,12 @@ io.on("connection", (socket) => {
 
       socket.data.voiceUser = null;
       socket.data.voiceSquad = null;
+      socket.data.voiceSpeaking = false;
     }
   );
 
   // ==========================================================
-  // SIGNAL WEBRTC
+  // SIGNAL WEBRTC — OFFER
   // ==========================================================
 
   socket.on(
@@ -207,6 +295,10 @@ io.on("connection", (socket) => {
     }
   );
 
+  // ==========================================================
+  // SIGNAL WEBRTC — ANSWER
+  // ==========================================================
+
   socket.on(
     "voice:answer",
     ({ target, answer }) => {
@@ -223,6 +315,10 @@ io.on("connection", (socket) => {
       );
     }
   );
+
+  // ==========================================================
+  // SIGNAL WEBRTC — ICE
+  // ==========================================================
 
   socket.on(
     "voice:ice-candidate",
@@ -256,6 +352,16 @@ io.on("connection", (socket) => {
     if (squadId) {
       const room = `voice:${squadId}`;
 
+      // Informer les autres qu'il ne parle plus
+      socket.to(room).emit(
+        "voice:user-speaking",
+        {
+          socketId: socket.id,
+          speaking: false,
+        }
+      );
+
+      // Informer les autres qu'il est parti
       socket.to(room).emit(
         "voice:user-left",
         {
